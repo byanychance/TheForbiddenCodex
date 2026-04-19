@@ -1,0 +1,3104 @@
+<!DOCTYPE html>
+
+<html lang="ko">
+<head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>CRT Desktop</title>
+<style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --body-bg: #000000d3;
+      --shell-top: #242323;
+      --shell-bottom: #242323;
+      --bezel-top: #3a3a3a;
+      --bezel-bottom: #1f1f1f;
+      --screen-bg-top: #04100c;
+      --screen-bg-bottom: #010403;
+      --glow: #6fffd0;
+      --text-soft: rgba(111, 255, 208, 0.84);
+      --panel-bg: rgba(0, 0, 0, 0.62);
+      --panel-line: rgba(111, 255, 208, 0.24);
+
+      --window-max-w: 1100px;
+      --window-max-h: 860px;
+      --window-vw: 92vw;
+      --window-vh: 85vh;
+
+      --profile-page-bg: #ffffff;
+      --profile-body-bg: #f4f4f1;
+      --profile-sub-bg: #eceae4;
+      --profile-card-bg: #ffffff;
+      --profile-text: #2f2f2f;
+      --profile-title: #111111;
+      --profile-muted: #555555;
+      --profile-line: rgba(0, 0, 0, 0.08);
+    }
+
+    html, body {
+      margin: 0;
+      width: 100%;
+      height: 100%;
+      font-family: "Pretendard", "Noto Sans KR", "Malgun Gothic", sans-serif;
+      background: var(--body-bg);
+      overflow: hidden;
+    }
+
+    body {
+      display: flex;
+      align-items: stretch;
+      justify-content: stretch;
+    }
+
+    .monitor {
+      position: relative;
+      width: 100vw;
+      height: 100vh;
+      background: linear-gradient(180deg, var(--shell-top) 0%, var(--shell-bottom) 100%);
+      border-radius: 26px;
+      box-shadow:
+        inset 0 2px 0 rgba(107, 107, 107, 0.65),
+        inset 0 -10px 18px rgba(0,0,0,0.12),
+        0 8px 30px rgba(0,0,0,0.18);
+      overflow: hidden;
+    }
+
+    .bezel {
+      position: absolute;
+      inset: 18px;
+      border-radius: 20px;
+      background: linear-gradient(180deg, var(--bezel-top) 0%, var(--bezel-bottom) 100%);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,0.08),
+        inset 0 -2px 8px rgba(0,0,0,0.45),
+        0 0 0 1px rgba(255,255,255,0.04);
+      padding: 14px;
+    }
+
+    .screen {
+      position: relative;
+      width: 100%;
+      height: 100%;
+      border-radius: 14px;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 50% 45%, rgba(50,255,180,0.12) 0%, rgba(0,0,0,0) 42%),
+        linear-gradient(180deg, var(--screen-bg-top) 0%, var(--screen-bg-bottom) 100%);
+      box-shadow:
+        inset 0 0 0 1px rgba(255,255,255,0.04),
+        inset 0 0 40px rgba(0,0,0,0.9),
+        inset 0 0 120px rgba(0,255,170,0.03);
+    }
+
+    .screen::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: repeating-linear-gradient(
+        to bottom,
+        rgba(255,255,255,0.03) 0px,
+        rgba(255,255,255,0.03) 1px,
+        transparent 1px,
+        transparent 4px
+      );
+      opacity: 0.22;
+      mix-blend-mode: screen;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .screen::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        radial-gradient(circle at 50% -10%, rgba(255,255,255,0.08), transparent 24%),
+        radial-gradient(circle at 50% 120%, rgba(0,0,0,0.50), transparent 38%),
+        radial-gradient(circle at 0% 50%, rgba(0,0,0,0.16), transparent 16%),
+        radial-gradient(circle at 100% 50%, rgba(0,0,0,0.16), transparent 16%);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .noise {
+      position: absolute;
+      inset: 0;
+      z-index: 1;
+      opacity: 0.045;
+      background-image: radial-gradient(rgba(255,255,255,0.85) 0.5px, transparent 0.6px);
+      background-size: 4px 4px;
+      mix-blend-mode: screen;
+      animation: noiseShift 0.18s steps(2) infinite;
+      pointer-events: none;
+    }
+
+    .vignette {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      box-shadow: inset 0 0 140px rgba(0,0,0,0.88);
+      pointer-events: none;
+    }
+
+    .content {
+      position: relative;
+      z-index: 3;
+      width: 100%;
+      height: 100%;
+      color: var(--glow);
+      text-shadow: 0 0 8px rgba(111,255,208,0.28);
+      padding: 24px;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 18px;
+    }
+
+    .topbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 13px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 999px;
+      background: var(--glow);
+      box-shadow: 0 0 10px rgba(111,255,208,0.8);
+      animation: pulse 1.6s infinite;
+    }
+
+    .desktop-area {
+      position: relative;
+      min-height: 0;
+    }
+
+    .desktop {
+      display: grid;
+      grid-template-columns: repeat(5, 110px);
+      align-content: start;
+      gap: 22px 18px;
+      padding-top: 6px;
+      max-width: none;
+    }
+
+    .desktop-icon {
+      appearance: none;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--glow);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 8px;
+      border-radius: 10px;
+      cursor: pointer;
+      text-shadow: 0 0 8px rgba(111,255,208,0.28);
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .desktop-icon:hover {
+      background: rgba(111,255,208,0.06);
+      border-color: rgba(111,255,208,0.25);
+      transform: translateY(-1px);
+    }
+
+    .icon-emoji {
+      width: 62px;
+      height: 62px;
+      display: grid;
+      place-items: center;
+      font-size: 34px;
+      border-radius: 14px;
+      border: 1px solid rgba(111,255,208,0.18);
+      background: linear-gradient(180deg, rgba(111,255,208,0.09) 0%, rgba(111,255,208,0.03) 100%);
+    }
+
+    .icon-label {
+      font-size: 13px;
+      line-height: 1.35;
+      text-align: center;
+      color: var(--text-soft);
+      word-break: keep-all;
+    }
+
+    .window-layer {
+      position: absolute;
+      inset: 0;
+      pointer-events: none;
+      z-index: 20;
+    }
+
+    .window {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      width: min(var(--window-vw), var(--window-max-w));
+      height: min(var(--window-vh), var(--window-max-h));
+      max-width: var(--window-vw);
+      max-height: var(--window-vh);
+      min-height: 0;
+      border: 1px solid var(--panel-line);
+      border-radius: 14px;
+      background: var(--panel-bg);
+      box-shadow:
+        inset 0 0 18px rgba(111,255,208,0.04),
+        0 12px 28px rgba(0,0,0,0.35);
+      overflow: hidden;
+      display: none;
+      pointer-events: auto;
+    }
+
+    .window.is-open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .window[data-window="trash"] {
+      background: rgba(0, 0, 0, 0.78);
+      border: 1px solid rgba(111,255,208,0.24);
+      box-shadow:
+        inset 0 0 18px rgba(111,255,208,0.04),
+        0 18px 44px rgba(0,0,0,0.42);
+    }
+
+    .window[data-window="music"] {
+      background: rgba(0, 0, 0, 0.78);
+      border: 1px solid rgba(111,255,208,0.24);
+      box-shadow:
+        inset 0 0 18px rgba(111,255,208,0.04),
+        0 18px 44px rgba(0,0,0,0.42);
+    }
+
+    .window[data-window="internet"] {
+      background: #f4f4f1;
+      color: #111;
+      border: 1px solid rgba(0,0,0,0.16);
+      box-shadow:
+        0 20px 44px rgba(0,0,0,0.35),
+        0 0 0 1px rgba(255,255,255,0.45) inset;
+    }
+
+    .window[data-window="internet"].is-open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .window[data-window="profile"] {
+      background: var(--profile-body-bg);
+      color: #111;
+      border: 1px solid rgba(0,0,0,0.16);
+      box-shadow:
+        0 20px 44px rgba(0,0,0,0.35),
+        0 0 0 1px rgba(255,255,255,0.45) inset;
+    }
+
+    .window[data-window="profile"].is-open {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .window-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 48px;
+      padding: 12px 14px;
+      border-bottom: 1px solid rgba(111,255,208,0.16);
+      background: rgba(111,255,208,0.05);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      font-size: 12px;
+    }
+
+    .window[data-window="profile"] .window-header,
+    .window[data-window="internet"] .window-header {
+      flex: 0 0 auto;
+      background: linear-gradient(180deg, #ffffff 0%, #ecebe6 100%);
+      border-bottom: 1px solid rgba(0,0,0,0.12);
+      color: #222;
+      text-shadow: none;
+    }
+
+    .window-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .window-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .window-btn {
+      appearance: none;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(111,255,208,0.25);
+      background: rgba(111,255,208,0.06);
+      color: var(--glow);
+      cursor: pointer;
+      font: inherit;
+      line-height: 1;
+    }
+
+    .window[data-window="profile"] .window-btn,
+    .window[data-window="internet"] .window-btn {
+      border: 1px solid rgba(0,0,0,0.16);
+      background: #ffffff;
+      color: #222;
+    }
+
+    .window-body {
+      padding: 16px;
+      color: var(--text-soft);
+      font-size: 14px;
+      line-height: 1.7;
+      min-height: 0;
+    }
+
+    .music-window-body,
+    .trash-window-body {
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .internet-window-body,
+    .profile-window-body {
+      padding: 0;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+      color: #111;
+      text-shadow: none;
+      background: #f4f4f1;
+    }
+
+    .internet-browser,
+    .profile-browser {
+      display: grid;
+      grid-template-rows: 56px minmax(0, 1fr);
+      height: 100%;
+      min-height: 0;
+    }
+
+    .internet-browser-bar,
+    .profile-browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #eceae4;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .internet-nav-btn,
+    .profile-nav-btn {
+      border: 1px solid rgba(0,0,0,0.12);
+      background: #fff;
+      color: #222;
+      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      font-size: 15px;
+      flex: 0 0 auto;
+    }
+
+    .internet-address,
+    .profile-address {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 14px;
+      background: #fff;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 999px;
+      color: #444;
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .internet-page,
+    .profile-page {
+      height: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+      background: #ffffff;
+    }
+
+    .internet-page {
+      padding: clamp(16px, 2vw, 24px);
+    }
+
+    .profile-page {
+      padding: clamp(16px, 2vw, 24px) clamp(16px, 2vw, 24px) 64px;
+    }
+
+    .internet-page::-webkit-scrollbar,
+    .profile-page::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .internet-page::-webkit-scrollbar-track,
+    .profile-page::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.04);
+    }
+
+    .internet-page::-webkit-scrollbar-thumb,
+    .profile-page::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.22);
+      border-radius: 999px;
+    }
+
+    .crime-page {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .crime-hero {
+      margin-bottom: 32px;
+      padding-bottom: 0;
+      border-bottom: none;
+    }
+
+    .crime-hero-visual {
+      position: relative;
+      width: 100%;
+      min-height: clamp(260px, 42vw, 420px);
+      border-radius: 24px;
+      overflow: hidden;
+      background: #0f1720;
+      box-shadow: 0 16px 36px rgba(0,0,0,0.18);
+    }
+
+    .crime-hero-visual img {
+      width: 100%;
+      height: 100%;
+      min-height: clamp(260px, 42vw, 420px);
+      object-fit: cover;
+      display: block;
+      filter: brightness(0.68) saturate(1.05);
+    }
+
+    .crime-hero-visual::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(to top, rgba(0,0,0,0.72) 0%, rgba(0,0,0,0.22) 42%, rgba(0,0,0,0.08) 100%),
+        linear-gradient(to right, rgba(0,0,0,0.38) 0%, rgba(0,0,0,0.08) 45%, rgba(0,0,0,0.18) 100%);
+    }
+
+    .crime-hero-overlay {
+      position: absolute;
+      left: clamp(18px, 3vw, 32px);
+      right: clamp(18px, 3vw, 32px);
+      bottom: clamp(18px, 3vw, 30px);
+      z-index: 1;
+    }
+
+    .crime-title {
+      margin: 0 0 10px;
+      font-size: clamp(34px, 5vw, 58px);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+      color: #ffffff;
+      font-weight: 900;
+      word-break: keep-all;
+      text-shadow: 0 4px 18px rgba(0,0,0,0.45);
+    }
+
+    .crime-subtitle {
+      margin: 0;
+      max-width: 780px;
+      font-size: clamp(15px, 1.8vw, 20px);
+      line-height: 1.8;
+      color: rgba(255,255,255,0.92);
+      font-style: italic;
+      word-break: keep-all;
+      text-shadow: 0 2px 8px rgba(0,0,0,0.45);
+    }
+
+    .crime-section {
+      margin-bottom: 18px;
+      padding: 24px 26px;
+      background: #fbfbf8;
+      border: 1px solid rgba(0,0,0,0.07);
+      border-radius: 20px;
+    }
+
+    .crime-section h3 {
+      margin: 0 0 14px;
+      font-size: clamp(22px, 2.5vw, 28px);
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      color: #111;
+      font-weight: 800;
+    }
+
+    .crime-section p {
+      margin: 0;
+      font-size: clamp(15px, 1.2vw, 17px);
+      line-height: 1.95;
+      letter-spacing: -0.01em;
+      color: #2f2f2f;
+      word-break: keep-all;
+      white-space: pre-line;
+    }
+
+    .crime-note {
+      margin-top: 10px;
+      padding: 20px 22px;
+      border-radius: 18px;
+      background: #f7f6f2;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .crime-note p {
+      margin: 0;
+      font-size: clamp(15px, 1.45vw, 17px);
+      line-height: 1.95;
+      color: #222;
+      white-space: pre-line;
+      word-break: keep-all;
+    }
+
+    .profile-list-view,
+    .profile-detail-view {
+      display: none;
+    }
+
+    .profile-list-view.active,
+    .profile-detail-view.active {
+      display: block;
+    }
+
+    .profile-page-title {
+      margin: 0 0 8px;
+      font-size: clamp(28px, 4vw, 32px);
+      font-weight: 800;
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      color: #111111;
+    }
+
+    .profile-page-desc {
+      margin: 0 0 24px;
+      color: #555555;
+      line-height: 1.7;
+      font-size: 15px;
+    }
+
+    .profile-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+      gap: 18px;
+    }
+
+    .profile-card {
+      border: 1px solid rgba(0,0,0,0.1);
+      background: #ffffff;
+      border-radius: 18px;
+      padding: 18px;
+      cursor: pointer;
+      text-align: left;
+      transition: transform 0.15s ease, box-shadow 0.15s ease, border-color 0.15s ease;
+    }
+
+    .profile-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 10px 18px rgba(0,0,0,0.06);
+      border-color: rgba(0,0,0,0.16);
+    }
+
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 18px;
+      margin-bottom: 14px;
+      background: linear-gradient(180deg, #ffffff 0%, #e5e4de 100%);
+      border: 1px solid rgba(0,0,0,0.08);
+      overflow: hidden;
+      padding: 0;
+    }
+
+    .profile-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display: block;
+    }
+
+    .profile-card h3 {
+      margin: 0 0 6px;
+      font-size: 20px;
+      font-weight: 800;
+      color: #111111;
+    }
+
+    .profile-card p {
+      margin: 0;
+      font-size: 15px;
+      color: #222;
+      line-height: 1.8;
+    }
+
+    .back-to-list {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 22px;
+      border: 1px solid rgba(0,0,0,0.1);
+      background: #fff;
+      color: #222;
+      border-radius: 10px;
+      padding: 10px 14px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+
+    .profile-detail-top {
+      display: grid;
+      grid-template-columns: minmax(180px, clamp(220px, 25vw, 280px)) minmax(0, 1fr);
+      gap: clamp(18px, 2vw, 28px);
+      align-items: start;
+      padding-bottom: 28px;
+      margin-bottom: 28px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    }
+
+    .profile-detail-avatar {
+      width: 100%;
+      aspect-ratio: 52 / 76;
+      border-radius: 24px;
+      background: #f1f1ee;
+      border: 1px solid rgba(0,0,0,0.08);
+      overflow: hidden;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      max-width: 260px;
+    }
+
+    .profile-detail-avatar img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+    }
+
+    .profile-detail-name {
+      margin: 0 0 8px;
+      font-size: clamp(34px, 5vw, 56px);
+      font-weight: 800;
+      letter-spacing: -0.04em;
+      line-height: 1.05;
+      color: #111111;
+      word-break: keep-all;
+    }
+
+    .profile-detail-sub {
+      margin: 0 0 18px;
+      color: #555555;
+      font-size: clamp(16px, 2vw, 18px);
+      line-height: 1.7;
+    }
+
+    .profile-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .profile-tag {
+      padding: 8px 13px;
+      border-radius: 999px;
+      background: #f0efe9;
+      border: 1px solid rgba(0,0,0,0.08);
+      font-size: 13px;
+      color: #333;
+      font-weight: 600;
+    }
+
+    .profile-section {
+      margin-bottom: 28px;
+    }
+
+    .profile-section h4 {
+      margin: 0 0 14px;
+      font-size: clamp(24px, 3vw, 28px);
+      font-weight: 800;
+      letter-spacing: -0.03em;
+      color: #111111;
+    }
+
+    .profile-section p {
+      margin: 0;
+      color: #2f2f2f;
+      font-size: clamp(15px, 1.5vw, 17px);
+      line-height: 1.9;
+      letter-spacing: -0.01em;
+      white-space: pre-line;
+      word-break: keep-all;
+    }
+
+    .profile-info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+
+    .info-card {
+      background: #fff;
+      border: 1px solid rgba(0,0,0,0.08);
+      border-radius: 16px;
+      padding: 16px;
+      min-width: 0;
+    }
+
+    .info-label {
+      margin: 0 0 8px;
+      font-size: 12px;
+      font-weight: 700;
+      color: #777;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .info-value {
+      margin: 0;
+      font-size: 15px;
+      color: #222;
+      line-height: 1.8;
+      white-space: pre-line;
+      word-break: keep-all;
+    }
+
+    .music-window-body {
+      padding: 18px;
+    }
+
+    .music-player {
+      display: grid;
+      gap: 16px;
+    }
+
+    .music-now {
+      padding: 14px 16px;
+      border: 1px solid rgba(111,255,208,0.18);
+      border-radius: 14px;
+      background: rgba(111,255,208,0.04);
+    }
+
+    .music-now-title {
+      font-size: 18px;
+      font-weight: 800;
+      color: var(--glow);
+      margin-bottom: 4px;
+    }
+
+    .music-now-path {
+      font-size: 12px;
+      color: rgba(111,255,208,0.7);
+      word-break: break-all;
+    }
+
+    .music-progress-wrap {
+      display: grid;
+      grid-template-columns: 54px 1fr 54px;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .music-time {
+      font-size: 12px;
+      color: var(--text-soft);
+      text-align: center;
+    }
+
+    .music-range,
+    .volume-range {
+      width: 100%;
+      accent-color: #6fffd0;
+      cursor: pointer;
+    }
+
+    .music-controls {
+      display: flex;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .music-control-btn {
+      min-width: 82px;
+      height: 42px;
+      padding: 0 14px;
+      border-radius: 12px;
+      border: 1px solid rgba(111,255,208,0.22);
+      background: rgba(111,255,208,0.08);
+      color: var(--glow);
+      cursor: pointer;
+      font: inherit;
+      font-weight: 700;
+    }
+
+    .volume-wrap {
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 10px;
+      padding: 12px 14px;
+      border: 1px solid rgba(111,255,208,0.16);
+      border-radius: 12px;
+      background: rgba(111,255,208,0.03);
+    }
+
+    .volume-label,
+    .volume-value {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .music-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .music-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      border: 1px solid rgba(111,255,208,0.14);
+      border-radius: 12px;
+      background: rgba(111,255,208,0.03);
+      cursor: pointer;
+      transition: background 0.15s ease, border-color 0.15s ease, transform 0.15s ease;
+    }
+
+    .music-item:hover {
+      background: rgba(111,255,208,0.07);
+      border-color: rgba(111,255,208,0.24);
+      transform: translateY(-1px);
+    }
+
+    .music-item.active {
+      background: rgba(111,255,208,0.12);
+      border-color: rgba(111,255,208,0.34);
+      box-shadow: inset 0 0 16px rgba(111,255,208,0.06);
+    }
+
+    .music-item-main {
+      min-width: 0;
+    }
+
+    .music-item-title {
+      font-size: 15px;
+      font-weight: 700;
+      color: var(--glow);
+      margin-bottom: 4px;
+    }
+
+    .music-item-path {
+      font-size: 11px;
+      color: rgba(111,255,208,0.68);
+      word-break: break-all;
+    }
+
+    .music-item-duration {
+      font-size: 13px;
+      color: var(--text-soft);
+    }
+
+    .music-item-state {
+      font-size: 11px;
+      letter-spacing: 0.08em;
+      color: rgba(111,255,208,0.72);
+      text-transform: uppercase;
+    }
+
+    .trash-window-body {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 260px;
+    }
+
+    .trash-auth {
+      width: min(100%, 560px);
+      text-align: center;
+    }
+
+    .trash-title {
+      margin: 0 0 14px;
+      font-size: 48px;
+      font-weight: 900;
+      color: var(--glow);
+      line-height: 1.1;
+    }
+
+    .trash-desc {
+      margin: 0 0 26px;
+      color: var(--text-soft);
+      line-height: 1.8;
+      font-size: 18px;
+    }
+
+    .trash-input-row {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+    }
+
+    .trash-input {
+      flex: 1;
+      min-width: 0;
+      height: 54px;
+      padding: 0 18px;
+      border-radius: 12px;
+      border: 1px solid rgba(111,255,208,0.22);
+      background: rgba(0,0,0,0.28);
+      color: var(--glow);
+      outline: none;
+      font: inherit;
+      font-size: 18px;
+    }
+
+    .trash-submit-btn {
+      height: 54px;
+      padding: 0 22px;
+      border-radius: 12px;
+      border: 1px solid rgba(111,255,208,0.22);
+      background: rgba(111,255,208,0.08);
+      color: var(--glow);
+      cursor: pointer;
+      font: inherit;
+      font-size: 18px;
+      font-weight: 700;
+    }
+
+    .trash-message {
+      min-height: 24px;
+      margin: 14px 0 0;
+      color: #ffb3b3;
+      font-size: 14px;
+    }
+
+    .taskbar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 52px;
+      padding: 10px 14px;
+      border: 1px solid rgba(111,255,208,0.18);
+      border-radius: 12px;
+      background: rgba(0, 0, 0, 0.34);
+      box-shadow: inset 0 0 18px rgba(111,255,208,0.04);
+      font-size: 12px;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .taskbar-left,
+    .taskbar-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .taskbar-title {
+      color: var(--text-soft);
+    }
+
+    .taskbar-clock {
+      min-width: 54px;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .confirm-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.45);
+      z-index: 9999;
+    }
+
+    .confirm-overlay.is-open {
+      display: flex;
+    }
+
+    .confirm-box {
+      width: min(92vw, 360px);
+      padding: 24px;
+      border-radius: 18px;
+      background: #f7f7f3;
+      border: 1px solid rgba(0,0,0,0.12);
+      box-shadow: 0 24px 60px rgba(0,0,0,0.28);
+      text-align: center;
+    }
+
+    .confirm-title {
+      margin: 0 0 10px;
+      font-size: 26px;
+      color: #111;
+    }
+
+    .confirm-desc {
+      margin: 0 0 18px;
+      color: #555;
+      line-height: 1.7;
+    }
+
+    .confirm-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: center;
+    }
+
+    .confirm-btn {
+      min-width: 96px;
+      height: 42px;
+      border-radius: 10px;
+      border: 1px solid rgba(0,0,0,0.1);
+      cursor: pointer;
+      font: inherit;
+    }
+
+    .confirm-btn.secondary {
+      background: #ffffff;
+      color: #333;
+    }
+
+    .confirm-btn.primary {
+      background: #111;
+      color: #fff;
+    }
+
+    .trace-section {
+      display: none;
+    }
+
+    .trace-section.is-visible {
+      display: block;
+    }
+
+    .trace-slider {
+      position: relative;
+      width: 100%;
+      max-width: 760px;
+      margin: 0 auto;
+      padding: 0 56px;
+    }
+
+    .trace-frame {
+      width: 100%;
+      aspect-ratio: 1856 / 1280;
+      max-height: 760px;
+      border-radius: 20px;
+      overflow: hidden;
+      background: #ece9e2;
+      border: 1px solid rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .trace-image {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #ece9e2;
+    }
+
+    .trace-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 999px;
+      background: rgba(255,255,255,0.95);
+      color: #222;
+      font-size: 18px;
+      cursor: pointer;
+      z-index: 2;
+      box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+    }
+
+    .trace-btn.prev {
+      left: 0;
+    }
+
+    .trace-btn.next {
+      right: 0;
+    }
+
+    .trace-meta {
+      margin-top: 12px;
+      text-align: center;
+      font-size: 14px;
+      color: #666;
+    }
+
+    .window[data-window="ending"] {
+      background: #f4f4f1;
+      color: #111;
+      border: 1px solid rgba(0,0,0,0.16);
+      box-shadow:
+        0 20px 44px rgba(0,0,0,0.35),
+        0 0 0 1px rgba(255,255,255,0.45) inset;
+    }
+
+    .window[data-window="ending"] .window-header {
+      flex: 0 0 auto;
+      background: linear-gradient(180deg, #ffffff 0%, #ecebe6 100%);
+      border-bottom: 1px solid rgba(0,0,0,0.12);
+      color: #222;
+      text-shadow: none;
+    }
+
+    .window[data-window="ending"] .window-btn {
+      border: 1px solid rgba(0,0,0,0.16);
+      background: #ffffff;
+      color: #222;
+    }
+
+    .ending-window-body {
+      padding: 0;
+      flex: 1 1 auto;
+      min-height: 0;
+      overflow: hidden;
+      color: #111;
+      text-shadow: none;
+      background: #f4f4f1;
+    }
+
+    .ending-browser {
+      display: grid;
+      grid-template-rows: 56px minmax(0, 1fr);
+      height: 100%;
+      min-height: 0;
+    }
+
+    .ending-browser-bar {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: #eceae4;
+      border-bottom: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .ending-nav-btn {
+      border: 1px solid rgba(0,0,0,0.12);
+      background: #fff;
+      color: #222;
+      border-radius: 8px;
+      width: 34px;
+      height: 34px;
+      cursor: pointer;
+      font-size: 15px;
+      flex: 0 0 auto;
+    }
+
+    .ending-address {
+      flex: 1;
+      min-width: 0;
+      padding: 9px 14px;
+      background: #fff;
+      border: 1px solid rgba(0,0,0,0.12);
+      border-radius: 999px;
+      color: #444;
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .ending-page {
+      height: 100%;
+      min-height: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      background: #ffffff;
+      padding: clamp(20px, 2vw, 28px);
+    }
+
+    .ending-page::-webkit-scrollbar {
+      width: 10px;
+    }
+
+    .ending-page::-webkit-scrollbar-track {
+      background: rgba(0,0,0,0.04);
+    }
+
+    .ending-page::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.22);
+      border-radius: 999px;
+    }
+
+    .ending-wrap {
+      max-width: 980px;
+      margin: 0 auto;
+    }
+
+    .ending-head {
+      display: grid;
+      grid-template-columns: minmax(260px, 340px) minmax(0, 1fr);
+      gap: 24px;
+      align-items: start;
+      margin-bottom: 24px;
+    }
+
+    .ending-poster {
+      width: 100%;
+      aspect-ratio: 1280 / 1856;
+      border-radius: 24px;
+      overflow: hidden;
+      background: #e9e7e0;
+      border: 1px solid rgba(0,0,0,0.08);
+      box-shadow: 0 16px 36px rgba(0,0,0,0.12);
+    }
+
+    .ending-poster img {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #e9e7e0;
+    }
+
+    .ending-head-copy {
+      min-width: 0;
+      padding-top: 6px;
+    }
+
+    .ending-kicker {
+      margin: 0 0 10px;
+      font-size: 12px;
+      font-weight: 700;
+      letter-spacing: 0.16em;
+      color: #777;
+      text-transform: uppercase;
+    }
+
+    .ending-title {
+      margin: 0 0 14px;
+      font-size: clamp(36px, 5vw, 62px);
+      line-height: 1.02;
+      letter-spacing: -0.05em;
+      color: #111;
+      font-weight: 900;
+      word-break: keep-all;
+    }
+
+    .ending-subtitle {
+      margin: 0;
+      max-width: 620px;
+      font-size: clamp(15px, 1.8vw, 19px);
+      line-height: 1.9;
+      color: #444;
+      word-break: keep-all;
+    }
+
+    .ending-divider {
+      height: 1px;
+      background: rgba(0,0,0,0.08);
+      margin: 0 0 22px;
+    }
+
+    .ending-section {
+      margin-top: 18px;
+      padding: 24px 26px;
+      background: #fbfbf8;
+      border: 1px solid rgba(0,0,0,0.07);
+      border-radius: 20px;
+    }
+
+    .ending-section h3 {
+      margin: 0 0 14px;
+      font-size: clamp(22px, 2.5vw, 28px);
+      line-height: 1.2;
+      letter-spacing: -0.03em;
+      color: #111;
+      font-weight: 800;
+    }
+
+    .ending-section p {
+      margin: 0;
+      font-size: clamp(15px, 1.2vw, 17px);
+      line-height: 1.95;
+      letter-spacing: -0.01em;
+      color: #2f2f2f;
+      white-space: pre-line;
+      word-break: keep-all;
+    }
+
+    .ending-final-note {
+      margin-top: 18px;
+      padding: 22px 24px;
+      border-radius: 18px;
+      background: #f7f6f2;
+      border: 1px solid rgba(0,0,0,0.08);
+    }
+
+    .ending-final-note p {
+      margin: 0;
+      font-size: clamp(15px, 1.35vw, 17px);
+      line-height: 1.95;
+      color: #222;
+      white-space: pre-line;
+      word-break: keep-all;
+    }
+
+    @media (max-width: 900px) {
+      .window[data-window="ending"] {
+        left: 12px !important;
+        top: 12px !important;
+        width: calc(100% - 24px) !important;
+        max-width: calc(100% - 24px) !important;
+        height: calc(100% - 24px) !important;
+        max-height: calc(100% - 24px) !important;
+        min-height: 0 !important;
+        transform: none !important;
+      }
+
+      .ending-head {
+        grid-template-columns: 1fr;
+      }
+
+      .ending-poster {
+        max-width: 340px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .ending-page {
+        padding: 16px 16px 56px;
+      }
+
+      .ending-title {
+        font-size: 34px;
+      }
+
+      .ending-section h3 {
+        font-size: 22px;
+      }
+
+      .ending-section p,
+      .ending-final-note p {
+        font-size: 14px;
+        line-height: 1.8;
+      }
+    }
+
+    @media (max-width: 900px) {
+      .window[data-window="ending"] {
+        left: 12px !important;
+        top: 12px !important;
+        width: calc(100% - 24px) !important;
+        max-width: calc(100% - 24px) !important;
+        height: calc(100% - 24px) !important;
+        max-height: calc(100% - 24px) !important;
+        min-height: 0 !important;
+        transform: none !important;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .ending-page {
+        padding: 16px 16px 56px;
+      }
+
+      .ending-title {
+        font-size: 34px;
+      }
+
+      .ending-section h3 {
+        font-size: 22px;
+      }
+
+      .ending-section p,
+      .ending-quote p {
+        font-size: 14px;
+        line-height: 1.8;
+      }
+    }
+
+
+    .ending-list-view,
+    .ending-detail-view {
+      display: none;
+    }
+
+    .ending-list-view.active,
+    .ending-detail-view.active {
+      display: block;
+    }
+
+    .ending-card h3 {
+      margin: 0 0 8px;
+      font-size: 22px;
+      font-weight: 800;
+      color: #111;
+    }
+
+    .ending-card p {
+      margin: 0;
+      font-size: 14px;
+      color: #555;
+      line-height: 1.7;
+    }
+
+    .ending-head-single {
+      grid-template-columns: 1fr;
+      margin-bottom: 8px;
+    }
+
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
+    }
+
+    @keyframes noiseShift {
+      0% { transform: translate(0, 0); }
+      25% { transform: translate(-1px, 1px); }
+      50% { transform: translate(1px, -1px); }
+      75% { transform: translate(1px, 1px); }
+      100% { transform: translate(0, 0); }
+    }
+
+    @media (max-width: 1024px) {
+      .profile-detail-top {
+        grid-template-columns: 220px minmax(0, 1fr);
+      }
+    }
+
+    @media (max-width: 900px) {
+      .window {
+        left: 12px !important;
+        top: 12px !important;
+        width: calc(100% - 24px) !important;
+        max-width: calc(100% - 24px) !important;
+        transform: none !important;
+      }
+
+      .window[data-window="profile"],
+      .window[data-window="internet"] {
+        left: 12px !important;
+        top: 12px !important;
+        width: calc(100% - 24px) !important;
+        max-width: calc(100% - 24px) !important;
+        height: calc(100% - 24px) !important;
+        max-height: calc(100% - 24px) !important;
+        min-height: 0 !important;
+        transform: none !important;
+      }
+
+      .profile-detail-top {
+        grid-template-columns: 1fr;
+      }
+
+      .profile-detail-avatar {
+        max-width: 260px;
+      }
+
+      .profile-info-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .window[data-window="trash"],
+      .window[data-window="music"] {
+        left: 12px !important;
+        top: 12px !important;
+        width: calc(100% - 24px) !important;
+        max-width: calc(100% - 24px) !important;
+        max-height: calc(100% - 24px) !important;
+        min-height: 0 !important;
+        height: auto;
+        transform: none !important;
+      }
+
+      .trash-auth {
+        width: 100%;
+      }
+
+      .trash-title {
+        font-size: 34px;
+      }
+
+      .trash-desc {
+        font-size: 15px;
+      }
+
+      .trash-input-row {
+        flex-direction: column;
+      }
+
+      .trace-slider {
+        padding: 0 48px;
+      }
+
+      .music-progress-wrap {
+        grid-template-columns: 46px 1fr 46px;
+      }
+    }
+
+    @media (max-width: 640px) {
+      .content {
+        padding: 16px;
+        gap: 14px;
+      }
+
+      .desktop {
+        grid-template-columns: repeat(2, minmax(92px, 110px));
+      }
+
+      .internet-browser-bar,
+      .profile-browser-bar {
+        padding: 10px;
+      }
+
+      .internet-page,
+      .profile-page {
+        padding: 16px 16px 56px;
+      }
+
+      .profile-card {
+        padding: 16px;
+      }
+
+      .profile-detail-name,
+      .crime-title {
+        font-size: 34px;
+      }
+
+      .profile-section h4,
+      .crime-section h3 {
+        font-size: 22px;
+      }
+
+      .profile-section p,
+      .info-value,
+      .profile-card p,
+      .crime-section p,
+      .crime-note p {
+        font-size: 14px;
+        line-height: 1.8;
+      }
+
+      .crime-hero-visual,
+      .crime-hero-visual img {
+        min-height: 240px;
+      }
+
+      .taskbar {
+        min-height: 46px;
+        padding: 8px 10px;
+      }
+
+      .trash-input-row {
+        flex-direction: column;
+      }
+
+      .trace-slider {
+        padding: 0 42px;
+      }
+
+      .trace-btn {
+        width: 38px;
+        height: 38px;
+      }
+
+      .music-item {
+        grid-template-columns: 1fr;
+        align-items: start;
+      }
+
+      .volume-wrap {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+<div class="monitor">
+<div class="bezel">
+<div class="screen">
+<div class="noise"></div>
+<div class="vignette"></div>
+<div class="content">
+<header class="topbar">
+<span>CASE FILE VIEWER</span>
+<div class="status">
+<span class="dot"></span>
+<span>ONLINE</span>
+</div>
+</header>
+<main class="desktop-area">
+<div class="desktop">
+<button class="desktop-icon" data-open="trash" type="button">
+<span class="icon-emoji">🗑</span>
+<span class="icon-label">쓰레기통</span>
+</button>
+<button class="desktop-icon" data-open="internet" type="button">
+<span class="icon-emoji">🌐</span>
+<span class="icon-label">인터넷</span>
+</button>
+<button class="desktop-icon" data-open="profile" type="button">
+<span class="icon-emoji">👤</span>
+<span class="icon-label">인물 파일</span>
+</button>
+<button class="desktop-icon" data-open="music" type="button">
+<span class="icon-emoji">🎵</span>
+<span class="icon-label">음악</span>
+</button>
+<button class="desktop-icon" data-open="ending" type="button">
+<span class="icon-emoji">🃏</span>
+<span class="icon-label">엔딩</span>
+</button>
+</div>
+</main>
+<div class="window-layer">
+<section class="window" data-window="trash">
+<div class="window-header">
+<div class="window-title"><span>🗑</span><span>쓰레기통</span></div>
+<div class="window-controls">
+<button class="window-btn" data-close="trash" type="button">×</button>
+</div>
+</div>
+<div class="window-body trash-window-body">
+<div class="trash-auth">
+<h3 class="trash-title">암호를 입력하세요.</h3>
+<p class="trash-desc">삭제된 기록에 접근하려면 확인 암호가 필요합니다.</p>
+<div class="trash-input-row">
+<input class="trash-input" id="trashPasswordInput" placeholder="암호 입력" type="text"/>
+<button class="trash-submit-btn" id="trashPasswordSubmit" type="button">확인</button>
+</div>
+<p class="trash-message" id="trashMessage"></p>
+</div>
+</div>
+</section>
+<section class="window" data-window="internet">
+<div class="window-header">
+<div class="window-title"><span>🌐</span><span>인터넷</span></div>
+<div class="window-controls">
+<button class="window-btn" data-close="internet" type="button">×</button>
+</div>
+</div>
+<div class="window-body internet-window-body">
+<div class="internet-browser">
+<div class="internet-browser-bar">
+<button class="internet-nav-btn" type="button">←</button>
+<div class="internet-address">network://shinryonghoe/archive</div>
+</div>
+<div class="internet-page">
+<article class="crime-page">
+<header class="crime-hero">
+<div class="crime-hero-visual">
+<img alt="신룡회" src="Shin.png"/>
+<div class="crime-hero-overlay">
+<h1 class="crime-title">신룡회 (龍會)</h1>
+<p class="crime-subtitle">“겉으로는 조직, 실제로는 하나의 국가처럼 기능하는 범죄 구조체.”</p>
+</div>
+</div>
+</header>
+<section class="crime-section">
+<h3>OVERVIEW</h3>
+<p>신룡회는 상해를 기반으로 형성된 최대 규모의 범죄 카르텔이다. 단순한 폭력조직이나 지역 기반 갱단의 수준을 넘어, 무력·자금·인맥·정치적 연결망을 동시에 보유한 초대형 범죄 네트워크로 기능한다. 조직원 수는 수천 명 이상으로 추정되며, 상해 본부를 중심으로 홍콩, 동남아시아, 한국, 미국 등 해외 지부까지 확장되어 있다. 규모 자체도 거대하지만, 더 위험한 점은 이 조직이 단순히 불법 사업을 운영하는 것이 아니라 사회 시스템 내부에 깊게 침투한 채 살아 움직인다는 것이다.</p>
+</section>
+<section class="crime-section">
+<h3>FLOOR GUIDE</h3>
+<p>B7~B2 : 차고
+B1 : 심문실
+1~9F : 훈련장
+10~40F : 업무지구
+41~44F : 내부보안구역
+45~47F : 관제실
+50F : 만상전
+55F : 간부집무실
+66F : 회장실</p>
+</section>
+<section class="crime-section">
+<h3>BUSINESS</h3>
+<p>신룡회의 주요 수익 구조는 다중 범죄 산업으로 이루어져 있다. 무기 밀매, 합성 마약 유통, 인신매매 및 장기 거래, 국제 자금 세탁, 정치 자금 제공까지 서로 다른 범죄 영역이 독립적으로 존재하는 것이 아니라 하나의 순환 구조처럼 맞물려 돌아간다. 즉, 한 사업에서 확보한 자금과 인맥이 다른 사업의 기반이 되고, 각 범죄 분야가 상호 보완적으로 조직 전체의 생존력을 강화하는 형태다. 이 때문에 단일 루트를 차단한다고 해서 조직 전체가 쉽게 붕괴하지 않는다.</p>
+</section>
+<section class="crime-section">
+<h3>STRUCTURE</h3>
+<p>신룡회는 전통적인 위계형 폭력조직의 성격과 현대적 기업형 범죄조직의 성격을 동시에 지닌다. 겉으로 보기에는 회장 중심의 절대 권력 구조를 유지하지만, 실제 내부 운영은 역할 분화와 지역별 네트워크를 기반으로 매우 체계적으로 이루어진다. 조직원 개인의 충성심도 중요하지만, 그보다 더 중요한 것은 시스템 자체가 배신과 이탈을 허용하지 않도록 설계되어 있다는 점이다. 신룡회는 사람 위에 세워진 조직이면서도, 동시에 사람을 소모품처럼 교체 가능한 부품으로 취급하는 구조를 가진다.</p>
+</section>
+<section class="crime-section">
+<h3>RULE</h3>
+<p>조직의 가장 핵심적인 규율은 잠입과 배신에 대한 절대적 응징이다. 내부에 잠입한 자, 혹은 배신이 확인된 자는 본인만 제거하는 선에서 끝나지 않는다. 친척을 포함한 혈연 전체를 제거하는 방식으로 대응하며, 현재까지 생존 사례는 없는 것으로 알려져 있다. 이 규율은 단순한 보복이 아니라 공포를 통한 질서 유지 장치에 가깝다. 따라서 신룡회 내부에서 충성은 윤리나 의리의 문제가 아니라, 생존의 문제로 작동한다.</p>
+</section>
+<section class="crime-section">
+<h3>POLITICAL TIES</h3>
+<p>신룡회가 특히 위험한 이유는 범죄조직임에도 불구하고 정치권 및 제도권과의 유착이 매우 깊다는 점이다. 수사 단계마다 외압이 들어오며, 실제로 수사관 좌천, 기밀 유출, 수사 방향 왜곡 사례가 반복적으로 발생해 왔다. 이는 신룡회를 단순히 “강한 조직”이 아니라, 제도 바깥이 아니라 제도 안쪽까지 파고든 조직으로 만든다. 즉, 신룡회는 법의 반대편에 있는 세력이 아니라, 법과 권력의 틈을 이용해 스스로를 보호하는 구조체다.</p>
+</section>
+<section class="crime-section">
+<h3>THREAT</h3>
+<p>신룡회는 외부에서 보이는 폭력성보다 내부에 축적된 구조적 위협이 더 큰 조직이다. 규모, 자금력, 해외 네트워크, 정치적 연결, 그리고 배신자를 혈연 단위로 제거하는 규율까지 갖추고 있기 때문에, 일반적인 단속이나 표면적 수사만으로는 절대 뿌리 뽑을 수 없다. 겉가지를 잘라내도 뿌리가 남아 다시 자라나는 고목처럼, 조직 전체를 무너뜨리기 위해서는 내부 구조 자체를 붕괴시키는 방식이 필요하다.</p>
+</section>
+<section class="crime-section">
+<h3>NOTE</h3>
+<div class="crime-note">
+<p>신룡회는 단순한 범죄집단이 아니다.
+이 조직의 진짜 위협은 “불법적인 일”을 한다는 점이 아니라,
+그 불법을 하나의 질서처럼 유지하고 있다는 데 있다.</p>
+</div>
+</section>
+</article>
+</div>
+</div>
+</div>
+</section>
+<section class="window" data-window="music">
+<div class="window-header">
+<div class="window-title"><span>🎵</span><span>음악</span></div>
+<div class="window-controls">
+<button class="window-btn" data-close="music" type="button">×</button>
+</div>
+</div>
+<div class="window-body music-window-body">
+<div class="music-player">
+<div class="music-now">
+<div class="music-now-title" id="musicNowTitle">Track 01</div>
+<div class="music-now-path" id="musicNowPath">songs/1.mp3</div>
+</div>
+<div class="music-progress-wrap">
+<span class="music-time" id="musicCurrentTime">00:00</span>
+<input class="music-range" id="musicProgress" max="100" min="0" step="1" type="range" value="0"/>
+<span class="music-time" id="musicTotalTime">02:47</span>
+</div>
+<div class="music-controls">
+<button class="music-control-btn" id="prevTrackBtn" type="button">이전</button>
+<button class="music-control-btn" id="playPauseBtn" type="button">재생</button>
+<button class="music-control-btn" id="stopTrackBtn" type="button">정지</button>
+<button class="music-control-btn" id="nextTrackBtn" type="button">다음</button>
+</div>
+<div class="volume-wrap">
+<span class="volume-label">볼륨</span>
+<input class="volume-range" id="volumeControl" max="100" min="0" step="1" type="range" value="70"/>
+<span class="volume-value" id="volumeValue">70%</span>
+</div>
+<div class="music-list" id="musicList"></div>
+</div>
+</div>
+</section>
+<section class="window" data-window="ending">
+<div class="window-header">
+<div class="window-title"><span>📼</span><span>엔딩</span></div>
+<div class="window-controls">
+<button class="window-btn" data-close="ending" type="button">×</button>
+</div>
+</div>
+<div class="window-body ending-window-body">
+<div class="ending-browser">
+<div class="ending-browser-bar">
+<button class="ending-nav-btn" id="endingBackToListBtn" type="button">←</button>
+<div class="ending-address" id="endingAddress">archive://ending/index</div>
+</div>
+<div class="ending-page">
+<div class="ending-list-view active" id="endingListView">
+<h1 class="profile-page-title">엔딩 파일</h1>
+<p class="profile-page-desc">열람할 엔딩 기록을 선택하세요.</p>
+<div class="profile-grid">
+<button class="profile-card ending-card" data-ending="ending01" type="button"><h3>가라앉는 밤</h3><p>사망 엔딩 기록</p></button><button class="profile-card ending-card" data-ending="ending02" type="button"><h3>한 번도 가져보지 못한 것</h3><p>사망 엔딩 기록</p></button><button class="profile-card ending-card" data-ending="ending03" type="button"><h3>끝내 지워지지 않은</h3><p>사망 엔딩 기록</p></button><button class="profile-card ending-card" data-ending="ending04" type="button"><h3>왕좌의 낙하</h3><p>사망 엔딩 기록</p></button><button class="profile-card ending-card" data-ending="ending05" type="button"><h3>허공의 파편</h3><p>사망 엔딩 기록</p></button><button class="profile-card ending-card" data-ending="ending06" type="button"><h3>살아갈 이유</h3><p>생존/관계 엔딩 기록</p></button><button class="profile-card ending-card" data-ending="ending07" type="button"><h3>길들여지지 않는 개</h3><p>생존/관계 엔딩 기록</p></button><button class="profile-card ending-card" data-ending="ending08" type="button"><h3>죽은 자의 결혼식</h3><p>생존/관계 엔딩 기록</p></button><button class="profile-card ending-card" data-ending="ending09" type="button"><h3>다 쓰이고 남은 것들 위에서</h3><p>최종 선택 엔딩 기록</p></button><button class="profile-card ending-card" data-ending="ending10" type="button"><h3>거울의 파편</h3><p>심리 붕괴 엔딩 기록</p></button>
+</div>
+</div>
+<div class="ending-detail-view" id="endingDetailView">
+<article class="ending-wrap">
+<header class="ending-head">
+<div class="ending-poster">
+<img alt="ENDING IMAGE" id="endingDetailImage" src=""/>
+</div>
+<div class="ending-head-copy">
+<p class="ending-kicker">FINAL ARCHIVE</p>
+<h1 class="ending-title" id="endingDetailTitle"></h1>
+<p class="ending-subtitle" id="endingDetailSubtitle"></p>
+</div>
+</header>
+<div class="ending-divider"></div>
+<section class="ending-section">
+<h3 id="endingDetailSectionTitle"></h3>
+<p id="endingDetailBody"></p>
+</section>
+</article>
+</div>
+</div>
+</div>
+</div>
+</section>
+<section class="window" data-window="profile">
+<div class="window-header">
+<div class="window-title"><span>👤</span><span>인물 파일</span></div>
+<div class="window-controls">
+<button class="window-btn" id="profileBackBtn" type="button">←</button>
+<button class="window-btn" data-close="profile" type="button">×</button>
+</div>
+</div>
+<div class="window-body profile-window-body">
+<div class="profile-browser">
+<div class="profile-browser-bar">
+<button class="profile-nav-btn" id="backToListBtn" type="button">←</button>
+<div class="profile-address" id="profileAddress">characters://index</div>
+</div>
+<div class="profile-page">
+<div class="profile-list-view active" id="profileListView">
+<h1 class="profile-page-title">인물 파일</h1>
+<p class="profile-page-desc">현재 열람 가능한 인물 기록입니다.</p>
+<div class="profile-grid">
+<button class="profile-card" data-profile="veyronliang" type="button">
+<div class="profile-avatar"><img alt="베이런 량" src="1.png"/></div>
+<h3>베이런 량</h3>
+<p>Veyron Liang</p>
+</button>
+<button class="profile-card" data-profile="zhangliyan" type="button">
+<div class="profile-avatar"><img alt="장리옌" src="2.png"/></div>
+<h3>장리옌</h3>
+<p>Zhang Liyan</p>
+</button>
+<button class="profile-card" data-profile="xuanlian" type="button">
+<div class="profile-avatar"><img alt="쉬안롄" src="3.png"/></div>
+<h3>쉬안롄</h3>
+<p>Xuan Lian</p>
+</button>
+<button class="profile-card" data-profile="zhangweilong" type="button">
+<div class="profile-avatar"><img alt="장웨이룽" src="4.png"/></div>
+<h3>장웨이룽</h3>
+<p>Zhang Weilong</p>
+</button>
+<button class="profile-card" data-profile="hanyue" type="button">
+<div class="profile-avatar"><img alt="한위에" src="5.png"/></div>
+<h3>한위에</h3>
+<p>Han Yue</p>
+</button>
+</div>
+</div>
+<div class="profile-detail-view" id="profileDetailView">
+<div class="profile-detail-top">
+<div class="profile-detail-avatar"><img alt="" id="detailAvatar" src=""/></div>
+<div>
+<h2 class="profile-detail-name" id="detailName"></h2>
+<p class="profile-detail-sub" id="detailSubtitle"></p>
+<div class="profile-tags" id="detailTags"></div>
+</div>
+</div>
+<section class="profile-section">
+<h4>INTRODUCTION</h4>
+<p id="detailIntroduction"></p>
+</section>
+<section class="profile-section">
+<h4>FILE / INFO</h4>
+<div class="profile-info-grid">
+<div class="info-card">
+<p class="info-label">Age / Profile</p>
+<p class="info-value" id="detailAgeProfile"></p>
+</div>
+<div class="info-card">
+<p class="info-label">Height / Weight</p>
+<p class="info-value" id="detailHeightWeight"></p>
+</div>
+<div class="info-card">
+<p class="info-label">Appearance</p>
+<p class="info-value" id="detailAppearance"></p>
+</div>
+<div class="info-card">
+<p class="info-label">Position</p>
+<p class="info-value" id="detailPosition"></p>
+</div>
+</div>
+</section>
+<section class="profile-section">
+<h4>FEATURE</h4>
+<p id="detailFeature"></p>
+</section>
+<section class="profile-section">
+<h4>CORE</h4>
+<p id="detailCore"></p>
+</section>
+<section class="profile-section">
+<h4>PERSONALITY</h4>
+<p id="detailPersonality"></p>
+</section>
+<section class="profile-section">
+<h4>NARRATIVE</h4>
+<p id="detailNarrative"></p>
+</section>
+<section class="profile-section">
+<h4>NOTE</h4>
+<p id="detailNote"></p>
+</section>
+<section class="profile-section trace-section" id="traceSection">
+<h4>TRACE</h4>
+<div class="trace-slider">
+<button class="trace-btn prev" id="tracePrevBtn" type="button">←</button>
+<div class="trace-frame">
+<img alt="TRACE IMAGE" class="trace-image" id="traceImage" src=""/>
+</div>
+<button class="trace-btn next" id="traceNextBtn" type="button">→</button>
+</div>
+<div class="trace-meta" id="traceCounter">1 / 1</div>
+</section>
+</div>
+</div>
+</div>
+</div>
+</section>
+</div>
+<footer class="taskbar">
+<div class="taskbar-left">
+<span class="taskbar-title">INVESTIGATION DESK</span>
+</div>
+<div class="taskbar-right">
+<span class="taskbar-clock" id="taskbarClock">21:00</span>
+</div>
+</footer>
+</div>
+</div>
+</div>
+</div>
+<div class="confirm-overlay" id="confirmOverlay">
+<div class="confirm-box">
+<h3 class="confirm-title">정말 확인하시겠습니까?</h3>
+<p class="confirm-desc">삭제된 프로필에 접근합니다.</p>
+<div class="confirm-actions">
+<button class="confirm-btn secondary" id="confirmCancelBtn" type="button">취소</button>
+<button class="confirm-btn primary" id="confirmOkBtn" type="button">확인</button>
+</div>
+</div>
+</div>
+<audio id="audioPlayer" preload="metadata"></audio>
+<script>
+    const openButtons = document.querySelectorAll('[data-open]');
+    const closeButtons = document.querySelectorAll('[data-close]');
+    const windows = document.querySelectorAll('.window');
+
+    const profileListView = document.getElementById('profileListView');
+    const profileDetailView = document.getElementById('profileDetailView');
+    const profileAddress = document.getElementById('profileAddress');
+    const profileBackBtn = document.getElementById('profileBackBtn');
+    const backToListBtn = document.getElementById('backToListBtn');
+    const profilePage = document.querySelector('.profile-page');
+
+    const detailAvatar = document.getElementById('detailAvatar');
+    const detailName = document.getElementById('detailName');
+    const detailSubtitle = document.getElementById('detailSubtitle');
+    const detailTags = document.getElementById('detailTags');
+    const detailIntroduction = document.getElementById('detailIntroduction');
+    const detailAgeProfile = document.getElementById('detailAgeProfile');
+    const detailHeightWeight = document.getElementById('detailHeightWeight');
+    const detailAppearance = document.getElementById('detailAppearance');
+    const detailPosition = document.getElementById('detailPosition');
+    const detailFeature = document.getElementById('detailFeature');
+    const detailCore = document.getElementById('detailCore');
+    const detailPersonality = document.getElementById('detailPersonality');
+    const detailNarrative = document.getElementById('detailNarrative');
+    const detailNote = document.getElementById('detailNote');
+
+    const endingListView = document.getElementById('endingListView');
+    const endingDetailView = document.getElementById('endingDetailView');
+    const endingAddress = document.getElementById('endingAddress');
+    const endingBackToListBtn = document.getElementById('endingBackToListBtn');
+    const endingDetailTitle = document.getElementById('endingDetailTitle');
+    const endingDetailSubtitle = document.getElementById('endingDetailSubtitle');
+    const endingDetailSectionTitle = document.getElementById('endingDetailSectionTitle');
+    const endingDetailBody = document.getElementById('endingDetailBody');
+    const endingDetailImage = document.getElementById('endingDetailImage');
+    const endingPage = document.querySelector('.ending-page');
+
+    const trashPasswordInput = document.getElementById('trashPasswordInput');
+    const trashPasswordSubmit = document.getElementById('trashPasswordSubmit');
+    const trashMessage = document.getElementById('trashMessage');
+
+    const confirmOverlay = document.getElementById('confirmOverlay');
+    const confirmCancelBtn = document.getElementById('confirmCancelBtn');
+    const confirmOkBtn = document.getElementById('confirmOkBtn');
+
+    const traceSection = document.getElementById('traceSection');
+    const traceImage = document.getElementById('traceImage');
+    const tracePrevBtn = document.getElementById('tracePrevBtn');
+    const traceNextBtn = document.getElementById('traceNextBtn');
+    const traceCounter = document.getElementById('traceCounter');
+
+    const taskbarClock = document.getElementById('taskbarClock');
+
+    const audioPlayer = document.getElementById('audioPlayer');
+    const musicNowTitle = document.getElementById('musicNowTitle');
+    const musicNowPath = document.getElementById('musicNowPath');
+    const musicCurrentTime = document.getElementById('musicCurrentTime');
+    const musicTotalTime = document.getElementById('musicTotalTime');
+    const musicProgress = document.getElementById('musicProgress');
+    const prevTrackBtn = document.getElementById('prevTrackBtn');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+    const stopTrackBtn = document.getElementById('stopTrackBtn');
+    const nextTrackBtn = document.getElementById('nextTrackBtn');
+    const volumeControl = document.getElementById('volumeControl');
+    const volumeValue = document.getElementById('volumeValue');
+    const musicList = document.getElementById('musicList');
+
+    let pendingRealProfileKey = null;
+    let currentTraceImages = [];
+    let currentTraceIndex = 0;
+    let isSeeking = false;
+
+    const tracks = [
+      {
+        title: 'Track 01',
+        src: 'Song1.mp3',
+        originalPath: 'C:\\Users\\songs\\1.mp3',
+        durationLabel: '02:47'
+      },
+      {
+        title: 'Track 02',
+        src: 'Song2.mp3',
+        originalPath: 'C:\\Users\\songs\\2.mp3',
+        durationLabel: '01:27'
+      },
+      {
+        title: 'Track 03',
+        src: 'Song3.mp3',
+        originalPath: 'C:\\Users\\songs\\3.mp3',
+        durationLabel: '03:27'
+      }
+    ];
+
+    let currentTrackIndex = 0;
+    const endingData = [
+          {
+                "key": "ending01",
+                "image": "E1.png",
+                "title": "가라앉는 밤",
+                "subtitle": "사망 엔딩 기록",
+                "body": "베이런은 총구가 자신을 향해 올라오는 순간에도 움직이지 않았다. 그건 몸이 굳어서도, 상황을 따라가지 못해서도 아니었다. 오히려 반대였다.\n\n                        그는 너무 분명하게 알고 있었다. 지금 어떤 각도로 팔이 들렸는지, 방아쇠에 걸린 손가락의 힘이 어느 정도인지, 반 박자만 빨라도 피할 수 있고, 한 걸음 비틀기만 해도 급소를 벗어날 수 있다는 사실까지 전부 계산하고 있었다. 싸우는 법도 알고 있었다. 상대의 중심을 무너뜨리는 법, 손목을 꺾어 총을 떨구게 만드는 법, 좁은 거리에서 목숨을 건지는 가장 빠른 순서도 이미 몸 어딘가에 남아 있었다. 그런데도 그는 움직이지 않았다. 할 수 없어서가 아니라, 해야 할 이유가 끝내 떠오르지 않았기 때문이다. 머릿속에 떠오르던 선택지들은 하나같이 힘을 잃은 종잇장처럼 젖어서 바닥으로 내려앉았다. 살아남는 방법은 있었지만, 살아남아야 할 이유는 희미했다. 그 차이가 사람을 멈추게 했다.\n\n                        그는 오래전부터 자신을 위해 움직인 적이 거의 없었다. 버텨야 했기 때문에 버텼고, 쓰러지지 않아야 했기 때문에 버티는 척을 해왔다. 살아야 해서 산 것이지, 살고 싶어서 산 적은 드물었다. 그의 시간은 선택의 결과라기보다 끊어질 때마다 억지로 매듭지어 이어 붙인 밧줄에 가까웠다. 닳고 젖고 군데군데 해진 줄을 손에 감은 채, 놓치지 않으려고 버틴 시간이 전부였다.\n\n                        그래서인지 그 순간만큼은 이상하리만치 담담했다. 처음으로, 아무것도 하지 않는 쪽이 더 자연스럽게 느껴졌다.\n\n                        방 안의 공기는 눅눅했다. 오래 닫혀 있던 공간 특유의 퀴퀴한 냄새 위로 금속이 식으면서 풍기는 차가운 냄새가 얇게 얹혀 있었다. 어디선가 기름 탄 냄새가 희미하게 떠돌았고, 먼지 냄새가 입안에 들러붙었다. 혀끝은 바짝 말라 있었고, 목 안쪽은 오래된 상처처럼 거칠었다.\n\n                        귀 안쪽에서는 낮고 둔한 울림이 계속 맴돌았다. 먼 데서 파도라도 치는 것처럼, 혹은 피가 느린 속도로 관자놀이를 두드리는 것처럼 규칙 없는 진동이 안쪽 벽을 긁고 지나갔다. 심장은 뛰고 있었지만, 살아 있으려는 기관이라기보다 아직 멈추지 않았을 뿐인 고장 난 펌프처럼 느리게 늦어져 있었다.\n\n                        그의 시선은 천천히 아래로 떨어졌다. 처음에는 총구를 보고 있었고, 다음에는 그걸 쥔 손을, 그다음에는 손목과 소매 끝을 지나 바닥 가까운 어둠을 향했다. 다시 올릴 수도 있었지만 그러지 않았다. 대신 눈을 감았다. 빛을 피하려는 습관 같기도 했고, 너무 오래 반복해서 이제는 생각보다 몸이 먼저 해버리는 반응 같기도 했다. 어쩌면 그건 살아남기 위한 태도가 아니라, 오래전부터 끝을 견디기 위해 익혀온 자세였는지도 몰랐다.\n\n                        눈을 감자 어둠은 단번에 내려왔다. 그러나 그것은 완전한 공백이 아니었다. 암전된 시야 뒤편에는 무너져 내린 기억의 잔해 같은 것들이 흐릿하게 떠다녔다.\n\n                        병실이 있었던 것도 같았다. 소독약 냄새와 약하게 울리던 기계음, 형광등 아래 창백하게 떠 있던 피부의 색, 말라붙은 입술, 제대로 잡히지 않던 손끝의 온기. 하지만 그 어느 것도 선명하게 붙들리지는 않았다. 얼굴도 흐렸고, 음성도 없었고, 구체적인 말은 하나도 남지 않았다.\n\n                        기억은 원래 이렇게 잔인했다. 가장 아픈 순간을 남겨두면서도 정작 붙잡고 싶은 세부는 먼저 지워버렸다. 그래서 끝내 남는 건 풍경이 아니라 감각뿐이었다. 누군가가 자신을 기다리고 있을지도 모른다는 느낌. 어딘가, 아주 멀고 희미한 곳에서 아직 끊어지지 않은 시선 하나가 자신을 향해 남아 있을지도 모른다는 막연한 감각. 이유라고 부르기엔 터무니없이 약했고, 구원이 되기엔 한참 모자랐다.\n\n                        하지만 이상하게도 그 정도면 충분했다. 너무 희미해서 오히려 거짓말 같지 않았고, 너무 작아서 더는 붙잡으려 애쓸 필요도 없었다. 그 생각이 몸 안으로 스며드는 동안, 그는 자신이 조금씩 놓여나는 것을 느꼈다. 어깨에 걸려 있던 보이지 않는 무게가 천천히 내려앉았다. 턱에 들어가 있던 힘이 풀리고, 등줄기를 따라 곤두서 있던 긴장이 서서히 풀어졌다. 숨은 짧게 끊겼다가 낮게 새어 나왔다.\n\n                        피부 위를 스치는 공기가 아까보다 차갑게 느껴졌다. 그 차가움은 불쾌하지 않았다. 오히려 뜨겁게 달궈진 몸 어딘가를 식혀주는 손 같았다. 죽음이란 대개 폭력적인 방식으로 온다고들 말하지만, 정작 그 문턱은 때로 이렇게 조용했다. 한순간에 꺾이는 게 아니라, 오래 붙잡고 있던 매듭이 안에서 하나씩 느슨해지는 식으로 찾아왔다. 입술이 아주 조금 움직였다. 남이 보기엔 거의 움직이지 않은 것처럼 보였을 것이다. 그 사이로 새어 나온 것은 말이라기보다 숨에 가까운 것이었다. 소리라고 부르기엔 너무 약했고, 이름이라고 하기엔 끝이 흐려져 있었다.\n\n                        누구를 부른 것인지, 정말 누군가를 부른 게 맞는지도 그는 확신할 수 없었다. 다만 그 짧은 숨이 입술 사이를 빠져나오는 동안, 그는 오래 붙잡고 있던 무엇인가를 손끝에서 놓쳐 보내는 기분을 느꼈다. 미련인지 죄책감인지, 아직 끝내지 못한 약속인지도 모를 것들이 손가락 사이 모래처럼 스르르 빠져나갔다. 혀끝에는 철 냄새가 났다. 피 맛이라고 단정하기에는 너무 옅었지만 금속성의 씁쓸한 감촉이 분명히 남아 있었다. 목 안쪽은 타들어가듯 말라 있었고, 숨이 드나들 때마다 거친 모래를 문지르는 것 같은 마찰감이 느껴졌다.\n\n                        그런데도 그는 더 이상 버티고 싶지 않았다. 버티는 건 늘 목적이 아니라 습관이었다. 죽지 않았기 때문에 계속 살아 있었을 뿐이고, 계속 살아 있었기 때문에 또 하루를 넘겼을 뿐이었다. 그런 식으로 이어온 시간은 결국 사람을 비워냈다. 생각은 느려졌다. 바깥의 시간과 안쪽의 시간이 어긋나기 시작했고, 소리와 감각은 엇박자로 들어왔다. 그런데 이상하게도 감각은 더 선명해졌다. 손끝에서 피가 빠져나가는 느낌, 무릎 뒤쪽이 비어 있는 듯한 허전함, 눈꺼풀 안쪽의 미세한 떨림, 관자놀이를 타고 식은 땀이 흘러내리는 감촉까지도 하나하나 또렷했다.\n\n                        모든 것이 끝나기 직전, 세계가 잠깐 선명해지는 순간이 있다면 아마 이런 식일 것이라고 그는 어렴풋이 생각했다. 삶이 멀어질수록 오히려 사물의 표면은 더 정확한 결을 드러냈다. 그 뒤로는 조용했다. 이상할 정도로. 누군가 숨을 죽인 침묵도 아니고, 공포가 방 안을 누르고 있는 정적도 아니었다. 그보다는 모든 소리가 한 겹 먼 곳으로 밀려난 뒤 남는, 탁한 수중의 고요에 가까웠다.\n\n                        그래서 방아쇠가 당겨지는 소리조차 아주 멀리서 일어난 일처럼 들렸다. 짧고 건조한 파열음이었다. 공기를 찢는 날카로움이 분명히 있었지만, 그건 더 이상 경고나 위협으로 인식되지 않았다. 단지 정해진 순서가 마침내 실행되었다는 사실만 남았다.\n\n                        충격은 생각보다 무겁게 들어왔다. 몸이 한 번 크게 흔들렸고, 가슴 한복판에서 단단한 망치가 안쪽을 후려친 것 같은 둔탁한 압박이 퍼졌다. 이어서 뜨거운 것이 관통했다. 앞에서 뒤로, 혹은 안에서 밖으로, 방향조차 분간하기 어려운 통과감이 늦게 따라왔다. 숨이 중간에서 끊겼다. 폐가 공기를 들이마시지 못한 채 움찔 멎었고, 순간적으로 세상이 조금 더 멀어졌다. 통증은 즉시 오지 않았다. 오히려 잠깐의 공백이 있었다. 몸이 먼저 충격을 받아들이고, 통증은 그 뒤를 천천히 좇아오는 식이었다.\n\n                        이미 힘이 빠져 있던 탓에 저항은 없었다. 근육은 명령을 기다리지 않았고, 관절은 버틸 뜻을 보이지 않았다. 다리가 먼저 무너졌다. 무릎이 접히며 하중이 아래로 쏠렸고, 발끝이 바닥을 헛디뎠다. 눈은 끝까지 감긴 채였다. 쓰러지는 동안에도 그는 끝내 아무것도 보지 않았다. 대신 바닥에서 올라오는 냉기가 먼저 느껴졌다. 차갑고 납작한 감각이 정강이와 손끝보다 먼저 가까워졌다. 그리고 다음 순간, 몸의 무게 전체가 아래로 확 꺼졌다.\n\n                        바닥에 닿는 감각은 이상할 만큼 둔했다. 뼈가 부딪치는 충격은 있었을 텐데, 그것조차 두꺼운 천 너머로 전해지는 것처럼 멀었다. 소리가 났는지조차 분간하기 어려웠다. 귓속의 울림이 여전히 남아 있었고, 바깥의 소리는 물속에서 들리는 것처럼 뭉개져 있었다.\n\n                        몸은 멈췄지만, 내부의 흔들림은 잠시 더 이어졌다. 가슴 안쪽 어딘가에서 마지막으로 남은 떨림이 한두 번 느리게 울렸고, 손끝으로 흐르던 감각도 차례차례 꺼져갔다. 식어가는 공기가 옆얼굴에 스쳤다. 먼지 냄새와 금속 냄새, 아주 희미한 화약 냄새가 한데 섞여 코끝을 스쳤다. 피는 따뜻했지만 그 온기조차 오래가지 않았다. 옷감 아래로 번져나가는 축축함이 느껴졌고, 그 감각마저 얼마 지나지 않아 남의 일처럼 멀어졌다.\n\n                        눈은 끝까지 뜨이지 않았다. 그는 마지막까지 아무것도 보지 않은 채, 닫힌 어둠 속에 남아 있었다. 마치 처음부터 저편을 향해 걷고 있었고, 지금은 겨우 문턱을 넘어서는 중인 사람처럼. 누구도 붙들지 않았고, 그 자신도 되돌아갈 쪽을 택하지 않았다. 남겨진 것은 식어가는 공기와 화약 섞인 금속 냄새, 그리고 조금 전까지 한 사람의 무게가 버티고 있던 자리에 깔리는 정적뿐이었다. 그 안에서 베이런이라는 존재는 빠르게 옅어졌다. 형체가 사라져서가 아니라, 더는 무엇에도 매달리지 않게 되었기 때문에. 마침내 완전히 놓여난 사람처럼, 그는 그 어둠 속으로 조용히 가라앉았다."
+          },
+          {
+                "key": "ending02",
+                "image": "E2.png",
+                "title": "한 번도 가져보지 못한 것",
+                "subtitle": "사망 엔딩 기록",
+                "body": "장리옌은 총성이 울린 뒤에도 바로 쓰러지지 않았다. 몸은 이미 한 번 크게 꺾였고, 중심은 진작 무너졌는데도, 그는 끝까지 바닥을 붙잡았다. 손바닥이 거칠게 미끄러지며 바닥을 짚었고, 팔에 힘을 실어 다시 몸을 세우려 했다. 한 번, 그리고 또 한 번. 다리는 이미 제 역할을 하지 못하고 있었지만, 그런 건 중요하지 않다는 듯했다. 무릎으로 버텼고, 무너진 자세를 팔꿈치로 억지로 끌어올렸고, 어떻게든 몸을 앞으로 밀어냈다. 제대로 걷는 꼴이 아니어도 상관없었다. 기어가듯 움직여도 괜찮았다. 중요한 건 멈추지 않는 것이었다. 멈추면 끝이었다. 그 사실은 너무 오래전부터 그의 몸에 각인되어 있었다. 누가 가르쳐준 것도 아니고, 말로 배운 것도 아니었다. 그냥 그렇게 살아남아야 했기 때문에 알게 된 감각이었다. 주저앉으면 밟혔고, 포기하면 버려졌고, 손을 놓는 순간 진짜로 끝난다는 걸 그는 너무 어린 나이에 배웠다. 그래서 몸이 먼저 무너진 뒤에도, 정신보다 근육이 먼저 반응했다. 아직 끝나지 않았다고. 아직 한 번은 더 버틸 수 있다고. 살아 있는 한, 앞으로 가야 한다고.\n\n하지만 이번에는 달랐다. 그 차이는 생각보다 조용하게 찾아왔다. 처음에는 단지 힘이 잘 들어가지 않는 정도였다. 손끝에 힘을 주면 버틸 수 있을 줄 알았고, 무릎으로 체중을 넘기면 다시 일어설 수 있을 줄 알았다. 그런데 몸은 그의 예상보다 빠르게 식어가고 있었다. 손가락 마디에 걸리던 힘이 스르르 빠졌고, 손목은 체중을 견디지 못한 채 미세하게 꺾였다. 무릎은 바닥을 밀어내지 못했고, 허벅지 근육은 텅 빈 자루처럼 말을 듣지 않았다. 그는 또 한 번 몸을 일으키려 했지만, 이번에는 정말로 올라오지 않았다. 바닥에 떨어진 숨만 거칠게 새어 나왔다. 움직여야 한다는 생각은 여전히 선명했는데, 몸은 이미 그 명령에서 조금씩 멀어지고 있었다. 그 어긋남이 이상하리만치 낯설었다. 늘 몸은 망가져도 따라와 줬다. 얻어맞아도, 굶주려도, 밤새 도망쳐도, 마지막 순간에는 어떻게든 버텨냈다. 그런데 이번에는 아니었다. 마치 안쪽 어디선가 누군가가 먼저 손을 놓아버린 것 같았다. 끝이라는 걸, 생각보다 먼저 몸이 알아차리고 있었다.\n\n그는 가까스로 벽까지 몸을 끌고 갔다. 정확히 말하면 걸어간 것이 아니라, 남아 있는 힘을 조금씩 짜내어 그쪽으로 무너져 간 것에 가까웠다. 손으로 벽면을 더듬었고, 차갑고 메마른 감촉이 손끝에 닿았다. 거칠게 갈라진 표면이 손바닥을 긁었다. 그 감촉을 의지해 등을 붙이고 앉는 순간, 안쪽에서 간신히 버티고 있던 무언가가 툭 끊어지는 느낌이 들었다. 마치 팽팽하게 당겨져 있던 줄 하나가 소리도 없이 끊어져 버리는 것처럼, 몸에서 힘이 빠져나갔다. 어깨가 아래로 처지고, 목을 지탱하던 힘이 풀리며 고개가 미세하게 기울었다. 그제야 그는 알았다. 아직 더 갈 수 있다고 우기던 건 마음이었고, 끝났다는 걸 받아들인 건 몸이 먼저였다는 걸. 몸은 언제나 정직했다. 버틸 수 있을 때는 버텼고, 안 되는 순간이 오면 더는 거짓말을 하지 않았다.\n\n숨은 점점 얕아졌다. 들이마시는 공기는 얇았고, 내쉬는 숨은 더 짧아졌다. 폐가 공기를 충분히 받지 못하는데도 이상하게 공포는 밀려오지 않았다. 조금 전까지만 해도 분명히 아팠다. 몸 안쪽이 찢어지고 비틀리는 것처럼 아팠고, 숨 한 번 들이쉴 때마다 상처가 안에서 벌어지는 것 같았다. 그런데 그 감각이 서서히 멀어지고 있었다. 통증이 사라진다기보다, 자기 것이 아니게 되는 쪽에 가까웠다. 아픔이 아직 몸 어딘가에는 남아 있는데, 그것이 더는 중심까지 닿지 못하고 바깥으로 밀려난 듯했다. 대신 다른 감각이 천천히 안으로 밀려들었다. 설명하기 어려운 종류의 고요였다. 죽기 직전의 평온이라고 부르기엔 너무 낯설고, 단순한 환각이라고 치부하기엔 이상할 만큼 또렷했다. 의식의 가장자리에서 장면들이 하나둘 떠오르기 시작했다. 기억처럼 보였지만, 기억일 리 없는 것들이었다. 자신이 살아본 적 없는 시간들. 발을 디딘 적 없는 방들. 단 한 번도 손에 넣지 못했던 어떤 평범한 삶의 조각들이, 마치 원래 자기 것이었던 것처럼 천천히 겹쳐졌다.\n\n어린 시절의 자신이 보였다. 그러나 그것은 그가 알고 있는 어린 시절이 아니었다. 배를 곯지 않았다. 속이 타들어가도록 허기진 밤이 없었다. 더러운 바닥이나 눅눅한 구석이 아니라, 햇빛이 얇게 들어오는 깨끗한 방에서 잠들고 있었다. 이불은 눅눅하지 않았고, 방 안에는 술 냄새 대신 비누 냄새와 마른 천 냄새가 감돌았다. 아침이면 누군가가 깨워주었고, 식탁 위에는 당연한 얼굴로 따뜻한 밥이 놓여 있었다. 김이 오르는 국, 갓 지은 밥, 젓가락 소리. 그런 사소한 것들이 이상할 만큼 또렷했다. 부모는 취해 있지 않았다. 눈빛에 탁한 열이 서려 있지도 않았고, 기분 하나로 손을 올리지도 않았다. 누군가의 발소리에 몸을 움츠릴 필요가 없었고, 문이 열리는 소리에 먼저 눈치를 볼 필요도 없었다. 그는 학교에 갔다. 책을 폈고, 글자를 읽었고, 시험을 봤다. 수업이 끝나면 누군가와 나란히 걸어 나왔고, 별것 아닌 말에 웃으며 길을 돌아왔다. 해가 기울고, 가방끈이 어깨를 누르고, 발끝이 피곤한 저녁. 그런 평범한 하루가 끊기지 않고 이어졌다. 이상한 건 그것이 낯설게 느껴지지 않는다는 점이었다. 한 번도 가져본 적 없는 삶인데도, 처음 보는 장면인데도, 마치 오래 잃어버렸던 제자리를 뒤늦게 되찾은 것처럼 자연스러웠다. 원래는 저랬어야 했다고. 처음부터 삶이라는 게 그렇게 흘렀어야 했다고. 그 감각이 너무 조용하고 또렷해서 오히려 잔인했다.\n\n시간은 그 안에서 더 흘렀다. 어린 날은 지나가고, 더 자란 자신이 보였다. 대학에 가고, 사람들 틈에 섞여 살아가고, 특별할 것 없는 일을 하며 하루를 보내는 장면들이 이어졌다. 아침에 일어나 대충 머리를 정리하고, 급하게 커피를 마시고, 지하철에 서서 졸다가, 퇴근 무렵이면 피곤한 얼굴로 불이 켜진 거리를 걷는 삶. 누구에게도 쫓기지 않고, 아무도 자신을 해치려 들지 않고, 하루가 다음 날로 자연스럽게 이어지는 종류의 시간. 대단한 성공도, 극적인 구원도 없었다. 그냥 평범한 날들이었다. 하지만 그 평범함이야말로 그가 끝내 한 번도 가져보지 못한 것이었다. 폭력이 없는 방, 의심하지 않아도 되는 손길, 내일을 전제로 세울 수 있는 계획. 그런 것들이 하나씩 이어져 있었다. 그는 그 장면들을 바라보며 알 수 없는 상실감과 함께 설명하기 어려운 안도감을 느꼈다. 자기 것이 아니었던 삶인데도, 어쩌면 어딘가에서는 정말로 가능했을지 모르는 삶 같았다. 아주 작은 선택 하나, 아주 사소한 운의 방향 하나만 달랐어도 닿을 수 있었던 시간처럼 느껴졌다.\n\n그리고 그 옆에, 누군가가 서 있었다.\n\n처음에는 실루엣뿐이었다. 빛을 등지고 서 있는 그림자처럼 윤곽만 희미하게 보였다. 얼굴은 끝내 또렷해지지 않았다. 눈매도, 입술도, 표정도 선명하게 잡히지 않았다. 그런데도 그는 이상하리만치 확신할 수 있었다. 저 사람이 누구인지, 왜 저 자리에 있는지, 왜 하필 자기 옆에 서 있는지 묻지 않아도 알 것 같았다. 이름을 부르지 않아도 되는 존재였다. 설명이 필요 없는 종류의 친밀함이었다. 오래 기다린 것 같은데도 조급하지 않았고, 가까이 있는데도 위협적이지 않았다. 그저 거기에 있어야 할 사람처럼 자연스러웠다. 그 곁에서는 경계할 필요가 없었다. 몸을 웅크리지 않아도 되었고, 다음 순간을 대비해 이를 악물지 않아도 되었다. 장리옌은 그 사실을 깨닫는 순간, 아주 희미하게 웃고 싶다는 생각을 했다. 살아 있는 동안 한 번도 제대로 배워보지 못했던 안도감이, 너무 늦게 도착한 손님처럼 조용히 가슴 한쪽에 내려앉았다.\n\n숨이 끊어지는 순간까지도 눈은 감기지 않았다. 시선은 어딘가를 향한 채 멈춰 있었고, 눈동자는 마지막 장면을 붙잡으려는 사람처럼 미세하게 흔들림 없이 고정되어 있었다. 입가에는 아주 옅은, 거의 남이 알아채지 못할 정도의 미세한 미소가 걸려 있었다. 그것은 기쁨이라기보다 체념에 가까운 표정도 아니었고, 고통 끝의 해방감만으로 설명할 수 있는 것도 아니었다. 오히려 너무 오래 자신과 상관없다고 여겼던 어떤 삶의 형태를, 마지막 순간에야 비로소 잠깐 엿본 사람의 얼굴에 가까웠다. 끝내 손에 넣지는 못했지만, 적어도 그것이 세상 어딘가에는 존재했음을 본 사람의 표정. 몸은 이미 식어가고 있었고, 숨은 더 이어지지 않았지만, 그 미세한 흔적만은 잠시 남아 있었다. 마치 죽음이 모든 것을 빼앗아 가기 직전, 아주 짧은 자비처럼 그의 얼굴 위에 내려놓고 간 것처럼."
+          },
+          {
+                "key": "ending03",
+                "image": "E3.png",
+                "title": "끝내 지워지지 않은",
+                "subtitle": "사망 엔딩 기록",
+                "body": "쉬안롄은 소란을 피하지 않았다. 총성이 오가는 공간에서 몸을 낮추거나 숨을 죽이는 대신, 한 발짝 물러난 뒤 오히려 더 안쪽으로 걸어 들어갔다. 총알이 스치는 공기의 진동, 벽을 때리는 파편의 마찰음, 짧게 터졌다가 끊어지는 외침들. 그런 것들이 아직 뒤편에 남아 있었지만, 그는 뒤를 돌아보지 않았다. 위험을 피하는 움직임이 아니라, 의도적으로 소음에서 멀어지는 동선이었다. 누군가가 쫓아올 수 있는 길을 택하지 않았고, 시선이 닿을 수 있는 각도도 전부 비켜 갔다. 발걸음은 서두르지 않았고, 멈칫거리지도 않았다. 이미 한 번 머릿속에서 계산이 끝난 경로처럼 일정한 속도로 이어졌다. 그가 향한 곳은 숨기 좋은 자리가 아니라, 소리가 닿지 않는 자리였다. 벽 하나를 사이에 두고 모든 기척이 잘려 나가는 지점. 그 경계선에 닿자, 바깥의 소음은 갑자기 한 겹 두껍게 눌린 것처럼 멀어졌다. 총성이 여전히 울리고 있었을 텐데도, 그 소리는 물속에서 들리는 것처럼 둔하게 변형되었다. 그는 그 지점에서 멈췄다. 등을 벽에 기대는 동작이 자연스러웠다. 준비된 자세라기보다, 오래전부터 몸이 기억하고 있던 피로의 형태에 가까웠다. 차갑고 건조한 벽의 감촉이 등과 어깨를 통해 천천히 전달되었다. 거칠게 갈라진 표면이 옷감 너머로 닿았고, 그 마찰이 오히려 지금의 위치를 또렷하게 인식하게 만들었다. 더 이상 움직일 필요가 없다는 신호처럼.\n\n그는 한동안 아무 생각도 하지 않았다. 정확히는, 하지 않으려 했다. 생각이 올라오는 방향을 알고 있었고, 그것을 어디까지 막아야 하는지도 알고 있었다. 늘 그랬다. 과거의 이름은 이미 버렸고, 그때의 선택도 전부 부정해 왔다. 그 시절의 자신은 지나치게 느렸고, 불필요하게 순진했고, 무엇보다 이 세계에서는 아무 쓸모도 없는 방식으로 움직였다. 그래서 잘라내야 했다고. 그 감정들을 그대로 두면 결국 발목을 잡힌다고. 그렇게 몇 번이나, 수없이 반복해서 스스로에게 주입해 왔다. 필요 없는 것은 지우고, 약한 부분은 덮고, 기억은 기능 단위로만 남긴다. 그게 지금까지 살아남는 방식이었다. 감정은 판단을 흐렸고, 기억은 행동을 늦췄다. 그래서 그는 늘 한 발 앞서 그것들을 잘라냈다. 의식적으로. 때로는 집요하게. 그 결과 남은 것은 훨씬 효율적인 자신이었다. 빠르고, 망설이지 않고, 필요 없는 선택지를 처음부터 고려하지 않는 형태. 그는 그 상태를 유지하는 데 익숙해져 있었다.\n\n그런데 이상하게도, 그날은 그 방식이 통하지 않았다. 막아두었던 문이 닫히지 않는 것처럼, 차단하려던 지점에서 미세한 틈이 먼저 생겼다. 처음에는 그저 집중이 흐트러진 정도라고 생각했다. 전투의 여파로 감각이 어긋난 것일 수도 있었고, 단순히 피로가 누적된 결과일 수도 있었다. 그래서 더 강하게 눌러보려 했다. 떠오르는 생각을 밀어내고, 시선을 다른 곳으로 고정하고, 호흡을 일정하게 맞추려 했다. 그러나 그 모든 시도는 이상하리만치 힘을 잃고 흩어졌다. 막아야 할 대상이 너무 약해서가 아니라, 반대로 너무 조용하게 스며들어서였다. 억지로 밀어내려 하면 할수록, 물이 손가락 사이로 빠져나가듯 더 안쪽으로 흘러들었다. 기억은 한꺼번에 쏟아지지 않았다. 파도처럼 밀려오지 않았다. 대신 아주 느리게, 그러나 분명하게 번졌다. 벽을 타고 스며드는 습기처럼, 눈에 보이지 않는 방식으로 안쪽을 적셔갔다.\n\n처음 떠오른 것은 정말 사소한 장면이었다. 의미를 붙이기도 애매한 정도의 기억. 손을 잡아주던 아이의 체온. 작고 마른 손이 자신의 손가락을 움켜쥐던 감각. 그 체온은 뜨겁지도, 차갑지도 않았다. 다만 분명히 살아 있는 온기였고, 이유 없이 놓아주면 안 될 것 같은 종류의 접촉이었다. 이어서 목소리가 떠올랐다. 고맙다고 말하던 목소리. 특별할 것 없는 한마디였는데도, 그때는 이상할 정도로 또렷하게 들렸던 음성. 어쩌면 그 말 자체보다, 그것을 말할 수밖에 없었던 상황이 더 강하게 남아 있었는지도 몰랐다. 그 뒤로 장면들이 하나둘 이어졌다. 늦은 밤 순찰을 돌며 나눴던 대화들. 목적 없이 걷는 것 같았지만, 사실은 그 시간 자체가 이유였던 순간들. 누군가 알아주지 않아도 괜찮다고 믿었던 시기. 결과보다 선택 자체에 의미가 있다고 생각했던 시절. 그 모든 것들이, 이미 버려진 줄 알았던 것들이, 지금 이 순간에 와서 하나의 흐름처럼 이어졌다. 그는 그것들을 밀어내지 않았다. 아니, 밀어낼 수 없었다. 그저 바라봤다. 개입하지 않고, 해석하지 않고, 판단하지 않은 채로.\n\n그는 그 장면들을 한참 바라봤다. 시간 감각이 얼마나 흘렀는지 알 수 없을 만큼 오래. 눈앞에 있는 것이 현실인지, 내부에서 재생되는 잔상인지 구분할 필요도 없었다. 중요한 건 그것들이 사라지지 않는다는 사실이었다. 지워진 줄 알았던 것들이, 실제로는 다른 형태로 남아 있었다는 점. 그 사실이 서서히 선명해졌다. 그리고 아주 늦게, 그는 그것을 이해했다. 지금까지 자신을 불편하게 만들던 감각의 정체가 무엇이었는지. 설명할 수 없었던 그 미세한 어긋남이 어디서 비롯된 것인지.\n\n죄책감이었다. 그리고, 그리움이었다.\n\n두 감정은 서로 반대되는 것처럼 보였지만, 그의 안에서는 분리되지 않은 채 함께 남아 있었다. 버렸다고 생각했던 과거를 향한 부정과, 그 안에 있던 자신을 향한 미련이 동시에 얽혀 있었다. 그래서 완전히 지워지지 않았고, 그래서 완전히 편해질 수도 없었다. 그는 그것을 인정하지 않으려고 오래 버텼다. 약하다고 생각했고, 필요 없다고 단정했고, 지금의 자신과는 맞지 않는 잔여물이라고 취급했다. 그런데도 그것은 사라지지 않았다. 형태를 바꾸고, 깊이를 바꾸고, 때로는 완전히 다른 감정으로 위장한 채 남아 있었다. 그리고 지금, 더는 숨길 필요가 없어졌을 때, 그 감정은 원래의 이름을 되찾고 있었다.\n\n쉬안롄의 눈이 아주 조금 느슨해졌다. 시야가 흐려진 것이 아니라, 그 안에 걸려 있던 긴장이 풀린 쪽에 가까웠다. 어딘가에서 항상 조여 있던 힘이, 소리 없이 풀려나갔다. 시선은 특정한 대상을 향하지 않은 채, 부드럽게 아래로 가라앉았다. 그가 증오한다고 믿었던 과거의 자신은, 끝내 사라지지 않았다. 오히려 그 안쪽 깊은 곳에서 조용히 남아 있었고, 지금까지의 자신을 밀어 올리는 힘이 되어 있었다. 그는 그것을 이제야 이해했다. 너무 착해서, 너무 쉽게 상처받아서, 결국 이 세계에서는 살아남을 수 없다고 판단했던 그 아이를, 그는 실제로는 한 번도 놓지 못했다. 버린 것이 아니라, 안쪽에 밀어 넣고 외면해 왔을 뿐이었다. 그래서 완전히 달라질 수 없었고, 그래서 완전히 무너질 수도 없었다. 지금의 자신은 그 아이를 부정한 결과가 아니라, 그 아이 위에 덧씌워진 형태에 가까웠다.\n\n벽에 기대고 있던 몸이 더 이상 긴장하지 않았다. 어깨를 붙잡고 있던 힘이 빠지고, 척추를 따라 올라가던 경직이 서서히 풀렸다. 고개가 아주 천천히 옆으로 기울었다. 경계해야 할 방향을 찾으려는 움직임이 아니라, 더는 방향을 신경 쓰지 않아도 되는 상태에 가까웠다. 호흡은 얕았지만 불안정하지 않았고, 맥박은 느려졌지만 흐트러지지 않았다. 처음으로, 아무것도 경계하지 않는 상태였다. 다음 순간을 대비하지 않아도 되고, 누군가의 움직임을 미리 읽어내지 않아도 되는 시간. 그가 한 번도 길게 가져본 적 없는 종류의 정적이었다.\n\n입가에 아주 옅은 미소가 걸렸다. 그것은 기쁨이라기보다는, 오래 미뤄두었던 사실을 뒤늦게 받아들인 사람의 표정에 가까웠다. 지워야 했다고 믿었던 것들이 사실은 자신을 지탱하고 있었다는 걸, 너무 늦게 이해한 사람의 얼굴. 그 미세한 변화는 겉으로는 거의 드러나지 않았지만, 안쪽에서는 분명한 전환이었다. 더는 부정하지 않아도 되는 상태. 더는 밀어내지 않아도 되는 상태. 그가 오랫동안 유지해 온 균형이, 그 순간 조용히 방향을 바꾸고 있었다."
+          },
+          {
+                "key": "ending04",
+                "image": "E4.png",
+                "title": "왕좌의 낙하",
+                "subtitle": "사망 엔딩 기록",
+                "body": "장웨이룽은 마지막 순간까지도 자신이 무너지지 않는 쪽이라고 믿었다. 총구가 겨눠지는 순간에도 놀라기보다 먼저 상대의 표정을 읽었다. 눈동자의 미세한 흔들림, 입가에 걸린 긴장, 손가락이 방아쇠에 얹힌 각도까지. 그는 그것을 단순한 위협으로 보지 않았다. 언제나 그랬듯이, 상황을 하나의 구조로 인식했다. 방 안에 선 사람들의 호흡이 서로 어떻게 어긋나 있는지, 누가 먼저 시선을 피하는지, 누가 결정을 내리지 못한 채 기다리고 있는지까지 빠르게 훑었다. 공기가 어떻게 움직이고 있는지까지도 감각처럼 읽혔다. 긴장으로 굳은 어깨, 숨을 죽인 채 굳어 있는 자세들, 서로를 의식하며 만들어내는 미묘한 간격. 그 모든 것이 그에게는 데이터였다. 평생을 그렇게 살아왔다. 사람을 믿은 적은 없었다. 대신 사람을 다루는 방식을 믿었다. 욕망을 쥐여주면 사람은 스스로 고개를 숙였고, 공포를 심으면 선택지를 버렸다. 필요할 때는 가차 없이 잘라냈고, 그 위에 새로운 관계를 얹었다. 그렇게 층을 쌓듯이 올라가며 그는 언제나 가장 높은 자리에 남아 있었다. 밑에서 무너지는 것들은 중요하지 않았다. 구조만 유지되면, 자신은 항상 위에 있었다. 그러니 지금 이 상황조차 완전히 통제를 벗어난 것으로 받아들이지 않았다. 아직 계산이 끝난 게 아니라고, 아직 뒤집을 수 있는 여지가 남아 있다고, 몸보다 먼저 머리가 그렇게 결론을 내리고 있었다. 심장은 조금 더 빠르게 뛰고 있었지만, 그것은 공포가 아니라 준비에 가까웠다. 언제든 다시 쥘 수 있는 기회가 온다고 믿고 있었다.\n\n그런데 이상한 점이 하나 있었다. 아무도 먼저 입을 열지 않았다. 그것이 가장 먼저 걸렸다. 누군가는 살기 위해 변명해야 했고, 누군가는 충성을 증명해야 했고, 누군가는 두려움에 굴복하는 모습을 보여야 했다. 그게 지금까지 그가 만들어온 질서였다. 그 안에서는 언제나 말이 먼저 움직였다. 말은 곧 위치였고, 태도였고, 선택이었다. 그런데 지금 이 공간에는 아무 말도 없었다. 숨을 죽인 침묵이 아니라, 선택 자체가 정지된 상태에 가까웠다. 그들은 그저 보고 있었다. 아무것도 요구하지 않고, 아무것도 기대하지 않은 채, 그를 향해 시선을 두고 있었다. 그 시선이 낯설었다. 지금까지 봐왔던 어떤 눈빛과도 달랐다. 거기에는 두려움도 없었고, 아첨도 없었고, 판단조차 없었다. 단지 결과를 기다리는 태도였다. 이미 결론이 정해진 상태에서, 마지막 장면만 확인하려는 시선. 그 시선들이 겹치면서, 방 안의 공기는 묘하게 평평해졌다. 위와 아래가 사라진 공간. 누가 위에 서 있는지, 누가 명령하는지 의미가 없는 상태. 그 순간, 아주 늦게, 감각이 따라왔다. 자신이 쥐고 있던 질서가 이미 손아귀 밖으로 빠져나갔다는 사실이. 그것은 생각으로 이해한 것이 아니라, 손에서 무언가가 미끄러져 떨어질 때의 감각처럼, 뒤늦게 체감되는 종류의 깨달음이었다. 그제야 장웨이룽의 얼굴이 아주 조금 굳었다. 큰 변화는 아니었다. 눈썹이 미세하게 모이고, 입술의 힘이 아주 약하게 굳어지는 정도. 하지만 그 작은 균열이, 지금까지 유지되던 완전한 통제의 형태를 처음으로 깨뜨리고 있었다.\n\n그는 반사적으로 입을 열었다. 생각해서 내린 판단이라기보다, 몸에 남아 있는 습관에 가까웠다. 이 상황에서 해야 할 행동은 이미 정해져 있었다. 말을 꺼내야 했다. 명령이든, 위협이든, 조롱이든 상관없었다. 중요한 건 말이 먼저 나가는 것이었다. 말은 공간의 위계를 다시 세우는 도구였고, 침묵을 깨는 순간 다시 자신이 중심으로 올라갈 수 있다고 믿었다. 상대를 꺾기 위해서라기보다, 마지막 순간까지도 이 공간의 위에 서기 위해서였다. 죽는다는 사실 자체는 받아들일 수 있었다. 그는 언제든 그런 가능성을 전제로 움직여왔다. 하지만 밀려나는 방식은 받아들일 수 없었다. 아무 말도 하지 못한 채, 아무 영향도 남기지 못한 채, 그저 결과의 일부로 사라지는 죽음. 그것은 그의 방식이 아니었다. 그러니 뭐라도 내뱉어야 했다. 이 공간이 여전히 자신의 것이라는 증거를, 마지막 한 번이라도 남겨야 했다.\n\n그러나 입술 사이에서 나온 것은 완성된 문장이 아니었다. 머릿속에서는 분명한 형태로 정리되어 있었을 것이다. 짧고 단정한 명령, 혹은 상대의 심리를 꺾을 수 있는 한마디. 하지만 그것이 소리로 이어지지 않았다. 공기를 밀어내야 할 순간에, 호흡이 한 번 끊겼다. 목 안쪽이 마른 채로 잠깐 걸렸고, 그 사이로 새어 나온 것은 말이라기보다 숨에 가까운 것이었다. 짓씹듯 끊긴 음절, 완성되지 못한 단어의 잔해. 그럼에도 그의 시선은 흐트러지지 않았다. 아직 끝난 것이 아니라는 듯, 이 상황이 완전히 닫히지 않았다는 듯, 억센 힘이 눈동자 안쪽에 남아 있었다. 말이 실패했는데도, 시선은 포기하지 않았다. 그는 마지막까지 눈을 내리지 않았다. 내려다보이는 쪽이 아니라, 내려다보는 쪽에 있어야 한다는 감각이 끝까지 남아 있었다.\n\n방아쇠가 당겨지는 순간에도 그는 눈을 떼지 않았다. 짧고 건조한 파열음이 공기를 가르며 지나갔고, 그 충격이 몸을 관통했다. 가슴 안쪽에서 무언가가 뒤틀리듯 흔들렸고, 중심이 한 번 크게 무너졌다. 몸이 뒤로 꺾였다. 균형이 깨진 채, 무게가 뒤쪽으로 쏠렸다. 그럼에도 그의 시선은 아래로 떨어지지 않았다. 시야가 흔들리고, 프레임이 기울어지면서도, 눈동자는 끝까지 위를 향해 버티고 있었다. 바닥이 가까워지고 있다는 사실을 인지하면서도, 그는 그것을 보지 않으려는 것처럼 시선을 유지했다. 마치 마지막 순간까지도 자신의 위치를 바꾸지 않겠다는 의지처럼. 무너지는 건 몸이고, 내려가는 건 형태일 뿐, 시선만큼은 끝까지 같은 방향을 향하고 있어야 한다는 고집.\n\n몸이 바닥에 닿는 순간, 충격은 둔하게 퍼졌다. 그러나 그보다 먼저 무너진 것은 균형이 아니라, 그가 끝까지 붙잡고 있던 ‘위치’라는 개념이었다. 위에서 내려다보는 감각이 더 이상 유지되지 않는 순간. 그럼에도 그는 눈을 감지 않았다. 시야는 이미 흔들려 있었고, 초점은 흐릿해지고 있었지만, 그 안에서도 끝까지 위를 향하려는 힘이 남아 있었다. 마치 죽는 순간조차, 자신이 내려다보는 쪽이어야 한다는 믿음이 마지막까지 버티고 있는 것처럼."
+          },
+          {
+                "key": "ending05",
+                "image": "E5.png",
+                "title": "허공의 파편",
+                "subtitle": "사망 엔딩 기록",
+                "body": "한위에는 끝까지 몸을 멈추지 않았다. 총구가 들리는 순간에도 공포보다 먼저 올라온 건 계산이었다. 그것은 생각이라기보다 이미 몸 안쪽에 각인된 반응에 가까웠다. 의자 다리를 뒤로 밀어 중심을 틀고, 무게를 한쪽으로 쏠리게 만들며 상체를 낮췄다. 시선을 일부러 흐트러뜨려 상대가 정확한 초점을 잡지 못하게 만들고, 동시에 거리와 각도를 재듯 발을 옮겼다. 손이 닿기 전에 먼저 파고드는 각도, 총구가 흔들리는 짧은 틈, 상대의 시선이 따라오는 속도까지. 그녀의 몸은 이미 그 모든 것을 알고 있는 것처럼 움직였다. 멈추면 죽는다는 단순한 사실을 넘어서, 어떻게 움직이면 한 박자 더 버틸 수 있는지까지 계산된 움직임이었다. 숨은 짧게 끊겼지만 흐트러지지 않았고, 시야는 좁아졌지만 오히려 더 또렷하게 중심을 잡고 있었다. 공포는 나중의 문제였다. 먼저 해야 할 것은 살아남는 것이었고, 그 다음이 그 이유였다.\n\n그녀는 너무 많은 것을 써서 여기까지 올라왔다. 몸을 썼다. 상황에 맞게 각도를 맞추고, 필요할 때는 거리를 좁히고, 필요 없을 때는 스스로 물러나는 법을 배웠다. 말도 썼다. 상대가 듣고 싶어 하는 말을 먼저 골라내고, 필요하면 진심처럼 보이게 만들었고, 필요 없을 때는 아무것도 남기지 않는 식으로 끊어냈다. 미소도 썼다. 호의를 가장하기도 했고, 경계를 무너뜨리기도 했고, 때로는 상대를 안심시키는 도구로도 썼다. 그 과정에서 마주해야 했던 것들도 알고 있었다. 누군가의 욕망, 노골적인 시선, 계산된 친절, 뒤늦게 드러나는 경멸. 그것들을 피하지 않았다. 피할 수 없다는 걸 알고 있었기 때문이 아니라, 그것을 감당하는 쪽이 더 오래 버틸 수 있다는 걸 알았기 때문이었다. 견디는 법을 배웠고, 받아들이는 척하는 법을 배웠고, 필요할 때는 그것을 다시 이용하는 법까지 익혔다. 그렇게 하나씩 쌓아 올린 결과가 지금의 자리였다. 더럽고 치사한 순간이 없었던 것은 아니었다. 스스로도 부정하고 싶은 선택이 없었던 것도 아니었다. 하지만 그 모든 시간 끝에, 손에 쥐고 있는 것이 분명히 있었다. 이름이든, 위치든, 혹은 누구도 쉽게 밀어내지 못하는 자리든. 그것이 있었기 때문에 여기까지 온 것이었다.\n\n그러니 아직은 아니어야 했다. 적어도 이렇게 끝나서는 안 됐다. 준비되지 않은 순간에, 아무도 기억하지 않을 짧은 장면 속에서, 의미도 없이 숨이 끊기는 식의 끝. 그것은 그녀가 쌓아온 시간과 맞지 않았다. 그렇게 사라지기에는, 그녀는 너무 많은 것을 써버렸다. 적어도 마지막 순간만큼은, 그 모든 것을 정리할 시간이나, 혹은 자신이 남긴 것을 확인할 여유가 있어야 했다. 그러니까 이건 아니었다. 아직은 아니었다. 그 생각이 몸을 더 밀어붙였다. 그녀는 마지막까지 발버둥쳤다. 손을 뻗고, 바닥을 긁고, 상대의 움직임을 비틀어보려 했다. 한 번이라도 틈이 생기면 그걸 잡아야 했다. 한 박자만 늦출 수 있다면, 상황을 바꿀 수 있다고 믿었다. 몸은 이미 한계를 넘어서고 있었지만, 그 사실을 인정하지 않으려는 쪽이 더 강했다.\n\n그러다 어느 순간, 그 모든 몸부림 사이로 전혀 어울리지 않는 생각 하나가 불쑥 끼어들었다. 그것은 계산도 아니었고, 선택지도 아니었고, 생존과도 관계없는 종류의 생각이었다. 평범하게 살아볼 걸. 그 문장은 너무 단순했고, 그래서 더 낯설었다. 지금까지의 그녀에게는 필요 없었던 종류의 전제였다. 누군가의 표정을 읽지 않아도 되는 삶. 상대의 눈동자에서 의도를 먼저 찾아내지 않아도 되는 시간. 방 안의 공기를 재지 않아도 되고, 말 한마디가 어떤 결과를 가져올지 계산하지 않아도 되는 하루. 자신의 몸값을 스스로 매기지 않아도 되는 상태. 그것은 선택이 아니라 전제였다. 다른 사람들에게는 당연했을지도 모르는 것. 하지만 그녀에게는 한 번도 당연했던 적 없는 조건이었다.\n\n그 생각은 이어졌다. 좋은 집이나 비싼 옷 같은 것이 아니었다. 그런 건 이미 여러 번 가까이에서 봤고, 잠깐씩은 가져본 적도 있었다. 문제는 그게 아니었다. 그냥 숨을 편하게 쉬는 것. 숨을 쉴 때마다 다음 순간을 계산하지 않아도 되는 상태. 아침에 눈을 뜨면, 그 하루가 무사히 이어질 거라는 전제를 의심하지 않아도 되는 삶. 누군가의 곁에 붙어 있어야만 다음 날이 보장되는 방식이 아니라, 아무에게도 기대지 않고도 시간이 흘러가는 구조. 조용히 늙어가는 삶. 특별한 사건 없이, 급격한 전환 없이, 그냥 천천히 변해가는 시간. 그건 한 번도 진지하게 상상해본 적 없는 종류의 미래였다. 애초에 선택지에 포함된 적이 없었고, 필요하다고 느껴본 적도 없었다. 그런데 이상하게도, 숨이 끊기기 직전이 되어서야 그것이 가장 또렷하게 떠올랐다. 다른 어떤 생각보다 선명했고, 다른 어떤 기억보다 가까웠다. 마치 그동안 일부러 보지 않으려 했던 것이, 마지막 순간이 되어서야 시야 안으로 밀려 들어온 것처럼.\n\n그 생각이 너무 늦게 왔다는 걸 깨닫는 순간, 그녀의 입술 사이로 아주 짧은 소리가 새어 나왔다. “…아.” 그 한 음절에는 특별한 의미가 담겨 있지 않았다. 놀람도, 후회도, 명확한 감정도 아니었다. 다만 인지와 동시에 사라지는 깨달음의 흔적에 가까웠다. 더 생각할 시간은 없었고, 그 생각을 붙잡을 여유도 없었다. 그저 한 번 스치듯 지나갔다가, 바로 놓쳐버린 감각.\n\n그 뒤로는 빨랐다. 지금까지 붙잡고 있던 힘이 갑자기 빠져나갔다. 손끝에서 먼저 감각이 흐려졌다. 바닥을 긁고, 상대를 밀어내고, 무엇이라도 붙잡으려던 손가락이 허무하게 미끄러졌다. 손톱이 바닥을 긁는 감각이 있었지만, 그것도 오래 가지 않았다. 힘을 주려 해도 들어가지 않았고, 쥐려고 해도 쥐어지지 않았다. 버티고 있던 무릎이 먼저 무너졌다. 하중을 지탱하던 지점이 갑자기 풀리며, 몸이 아래로 쏠렸다. 균형을 잡으려는 반응이 한 박자 늦었고, 이미 늦어버린 뒤였다. 시야가 기울었다. 바닥 쪽으로 천천히, 그러나 확실하게 내려갔다. 위와 아래의 구분이 흐려지면서, 중심이 완전히 무너졌다.\n\n그 순간까지도, 그녀의 몸은 아주 미세하게라도 버티려는 움직임을 남기고 있었다. 완전히 포기하는 쪽으로 넘어가기 직전까지, 마지막 남은 힘을 끌어내듯 반응하고 있었다. 하지만 그 움직임은 더 이상 이어지지 않았다. 붙잡을 수 있는 것은 아무것도 없었고, 밀어낼 수 있는 대상도 사라졌다. 그렇게, 계산으로 시작했던 모든 것이 계산되지 않는 끝으로 미끄러졌다."
+          },
+          {
+                "key": "ending06",
+                "image": "E6.png",
+                "title": "살아갈 이유",
+                "subtitle": "생존/관계 엔딩 기록",
+                "body": "—— 결혼식 사진 한 장.\n\n정장을 입은 적 없는 남자였다. 몸에 맞지 않는 옷이었다. 어깨는 조금 뻣뻣했고, 셔츠 깃은 목을 조르는 것처럼 낯설게 느껴졌을 것이다. 투기장에서 맨주먹으로 사람 목을 꺾던 손가락에 반지가 있다. 금속이 손가락에 닿는 감각은 익숙한 종류가 아니었다. 칼도 아니고, 피도 아니고, 부러지는 뼈의 저항도 아닌, 아무것도 하지 않는 물건의 무게. 뺨 위 흉터를 가리지 않았다. 가릴 생각조차 하지 않았다. 문신은 셔츠 소매 아래로 그대로 드러나 있었고, 정장은 그것을 숨기기보다 오히려 더 도드라지게 만들었다. 양복은 끝까지 어색했다. 몸이 아니라 삶에 맞지 않는 옷처럼.\n\n사진 속 그 남자는 웃고 있었다.\n\n입꼬리가 겨우 올라간 정도였다. 시선을 주지 않으면 놓칠 만큼 미세한 변화였다. 그러나 그것은 분명히 ‘웃는 얼굴’이었다. 강요된 표정도 아니었고, 상대를 속이기 위한 기술도 아니었다. 그저 자연스럽게 올라온 근육의 결과. 량즈위라는 이름으로 34년을 살면서, 단 한 번도 카메라 앞에서 만들어본 적 없는 종류의 표정이었다. 기록된 적도 없고, 남길 필요도 없었던 얼굴. 그런데 그날, 그 한 장에 남아 있었다.\n\n죽고 싶어하는 사람이었다.\n\n그건 말로 표현되는 종류의 욕망이 아니었다. 계획을 세우거나, 방법을 고민하거나, 구체적인 결말을 상상하는 형태도 아니었다. 그냥 방향이었다. 계속해서 아래로 기울어지는 쪽. 항구 난간에 기대어 수면 아래를 들여다보는 것이 유일한 습관이었다. 물이 얼마나 깊은지, 떨어지면 얼마나 빨리 가라앉을지 같은 계산은 하지 않았다. 그저 내려다봤다. 검게 비어 있는 수면을. 그 안쪽으로 몸이 미끄러지는 감각을 상상하는 것도 아니었다. 다만 그 방향이 편하다고 느꼈다. 아무것도 붙잡지 않아도 되는 쪽. 새벽마다 악몽에서 깨어났다. 땀에 젖은 상태로 숨을 고르고, 아무것도 보이지 않는 천장을 바라보며 얼룩을 세었다. 하나, 둘, 셋. 숫자가 아니라 시간을 세는 방식이었다. 밤이 끝날 때까지 버티는 방법. 동생이 죽은 날 이후 이 남자의 시간은 멈췄다. 그날 이후로 이어진 모든 시간은 본인의 것이 아니었다. 그냥 밀려온 시간이었다. 살아야 할 이유를 잃어버린 인간에게, 회장이 강제로 숨을 쥐어줬다. 살게 만든 것이 아니라, 죽지 못하게 만든 쪽에 가까웠다. 그는 시키는 대로 숨 쉬었고, 시키는 대로 사람을 죽였다. 명령은 명확했고, 결과는 단순했다. 생각할 필요가 없었다. 살아 있는 이유를 고민하지 않아도 되는 구조였다.\n\n자기 자신의 가치를 믿지 않았다.\n\n그건 겸손이나 자학과는 다른 종류였다. 그냥 판단 자체를 하지 않는 상태였다. 자신이 어떤 인간인지, 무엇을 할 수 있는지, 어떤 의미를 가지는지 같은 질문을 아예 하지 않았다. 필요 없었기 때문이다. 누군가 자신을 걱정하면 불편해했다. 그 감정이 이해되지 않았고, 받아들일 준비도 되어 있지 않았다. 누군가 손을 내밀면 먼저 피했다. 붙잡히면, 관계가 생기면, 다시 잃는 과정이 따라온다는 걸 알고 있었기 때문이었다. 그래서 처음부터 거리를 두는 쪽이 편했다.\n\n그런 남자가 변했다.\n\n변화는 극적이지 않았다. 이 남자에게 극적인 건 언제나 파괴뿐이었으니까. 무언가가 한 번에 바뀌는 방식은, 그의 삶에서는 대부분 부서지는 형태로만 나타났다. 그래서 이번에도 그렇게 오지 않았다. 대신 아주 느리게, 거의 인지되지 않는 속도로 무너지던 것들이 멈췄다. 이전에는 계속 아래로 가라앉던 감각이, 어느 순간부터 더 내려가지 않았다. 악몽 뒤에 눈을 떴을 때, 옆에 체온이 있다는 걸 알게 됐다. 처음에는 그 사실을 인식하지 못했다. 단지 덜 춥다고 느꼈고, 숨이 덜 거칠다고 느꼈다. 그 다음에야 그 이유를 알았다. 누군가가 옆에 있었다. 숨을 쉬고 있는 사람. 따뜻한 온도를 가진 사람. 그리고 그 온도가, 자신에게 닿아 있었다.\n\n어느 날부터 새벽에 항구로 나가지 않았다.\n\n습관은 쉽게 사라지지 않는다. 몸은 여전히 같은 시간에 깨어났고, 여전히 같은 방향으로 움직이려 했다. 그러나 문 앞에서 멈추는 날이 생겼다. 이유는 명확하지 않았다. 단순히 나가지 않아도 된다는 생각이 들었을 뿐이었다. 대신 다른 행동이 들어왔다. 유저의 잠든 얼굴을 내려다보는 시간. 처음에는 확인에 가까웠다. 숨이 고른지, 몸이 식지 않았는지, 아무 문제 없는지. 그런 식으로 시작된 행동이, 어느 순간부터 이유 없이 이어졌다. 그냥 보는 시간. 아무 일도 일어나지 않는 시간을 가만히 바라보는 일. 자기도 모르게.\n\n이 남자가 먼저 말했다.\n\n어느 비 오는 저녁이었다. 바깥은 축축했고, 공기는 무겁게 가라앉아 있었다. 몸 상태도 좋지 않았다. 피로가 쌓여 있었고, 집중이 흐트러진 상태였다. 소파에 누워 유저 무릎에 머리를 올린 채, 천장을 보고 있었다. 아무 의도 없이 시작된 자세였다. 몸을 내려놓을 곳이 필요했을 뿐이었다. 한동안 아무 말도 하지 않았다. 숨만 천천히 오르내렸다. 그러다, 생각보다 먼저 입이 열렸다.\n\n\"比起死亡，我更害怕失去你。” 「 너 잃는 게 무서워. 죽는 것보다. 」\n\n그 말은 준비된 문장이 아니었다. 정리된 감정도 아니었고, 설명하려는 의도도 없었다. 그냥 나온 말이었다. 그런데 그 한 문장 안에는, 이 남자가 평생 피해왔던 감정이 그대로 들어 있었다. 죽음보다 무서운 것이 생겼다는 사실. 그건 곧, 살 이유가 생겼다는 의미였다.\n\n그게 프러포즈였다.\n\n반지도 없었다. 무릎을 꿇지도 않았다. 꽃도 없었고, 미래를 약속하는 말도 없었다. 대신 남은 건 하나였다. 잃기 싫다는 공포. 그 감정이, 이 남자에게는 사랑의 형태로 나타났다. 지키고 싶어서가 아니라, 잃고 싶지 않아서 붙잡는 방식. 그게 그가 할 수 있는 최대한의 고백이었다.\n\n결혼 후의 베이런은 크게 달라지지 않았다.\n\n여전히 말이 없고, 여전히 까칠하고, 여전히 감정 표현이 서투르다. 웃는 일은 많지 않았고, 먼저 다가가는 일도 드물었다. 그러나 바뀐 것들은 있었다. 눈에 잘 띄지 않는 쪽에서. 장을 본다. 필요한 것만 고르는 것이 아니라, 다음 식사를 생각하고 움직인다. 생선을 굽는다. 불을 조절하고, 타지 않게 뒤집고, 접시에 담는다. 유저가 늦으면 현관 불을 켜둔다. 아무 말도 하지 않지만, 들어오는 순간 바로 알 수 있게. 동생 이야기를 가끔 꺼낸다. 길게 말하지는 않는다. 단편적으로, 끊어지듯 말한다. 그러나 더 이상 피하지 않는다.\n\n사진 속에서 웃는다.\n\n여전히 크게 웃지는 않는다. 그러나 그 미세한 변화가, 이전에는 존재하지 않았던 것이다. 량즈안의 일기 마지막 장 아래, 그의 필체로 한 줄이 적혀 있다. 정돈되지 않은 글씨. 급하게 쓴 것도 아니고, 신중하게 고른 것도 아닌, 그냥 남겨둔 문장.\n\n— 살고 있어.\n\n그 문장은 선언이 아니었다. 다짐도 아니었다. 그저 상태였다. 지금 이 순간이 어떤지에 대한 기록. 죽지 않는 것이 아니라, 살아 있는 쪽으로 기울어졌다는 사실. 그리고 그 차이는, 이 남자에게는 전부였다."
+          },
+          {
+                "key": "ending07",
+                "image": "E7.png",
+                "title": "길들여지지 않는 개",
+                "subtitle": "생존/관계 엔딩 기록",
+                "body": "—— 결혼식 사진 한 장.\n\n정장이 아니다. 애초에 그런 옷이 어울릴 몸도, 그런 차림으로 얌전히 서 있을 삶도 아니었다. 가죽 재킷은 구겨진 채 몸에 걸쳐져 있고, 셔츠는 단추가 하나쯤 어긋난 채 주름이 눌어붙어 있다. 입술 피어싱은 그대로다. 금속이 입술 아래 박힌 채 웃을 때마다 미세하게 당겨지고, 핑크색 머리카락은 반쯤 묶였다가 풀려 바람에 날린다. 단정하게 꾸민 사람의 모습이 아니라, 잠깐 멈춰 섰을 뿐 언제든 다시 달려나갈 것 같은 사람의 형체다. 유저를 바이크 뒤에 태운 채 찍힌 사진인데, 촬영자는 없다. 누가 각도를 잡고 순간을 기다린 것도 아니다. \n\n주유소 CCTV에 우연히 찍힌 화면을 잘라낸 것이니까. 형광등 아래 젖은 바닥이 희게 번들거리고, 기름 얼룩과 타이어 자국이 검게 눌린 그 위에 이 남자가 서 있다. 엔진은 아마 완전히 꺼지지도 않았을 것이다. 사진에는 소리가 없는데도 금속이 떨리는 진동과 방금 전까지 도로를 찢고 달리던 속도의 잔열이 화면 밖으로 번져 나오는 것처럼 보인다. 그런데 그 안에서 이 남자가 웃고 있다. 입꼬리만 비뚜름하게 들어 올리는 비웃음이 아니다. 상대를 재거나, 장난처럼 흥미를 보일 때 짓던 표정도 아니다. 이가 조금 드러나 있다. 턱이 풀리고, 입이 벌어지고, 숨이 섞인 채 그냥 튀어나온 웃음이다. 몸이 먼저 반응한 얼굴이다. 더 자세히 보면, 핸들 위에 얹힌 유저의 손을 자기 허벅지 쪽으로 눌러 붙잡고 있는 왼손이 보인다. 힘을 과하게 준 건 아닌데, 그렇다고 풀어놓은 것도 아니다. 떨어지지 않게, 미끄러지지 않게, 자연스럽게 자기 쪽으로 고정해두고 있다. 누굴 붙드는 법보다, 놓치지 않는 법을 먼저 배운 손이다.\n\n미친 개였다. 열세 살에 손이 묶인 채 벽돌을 들고 사람 머리를 깨던 순간부터 방향은 정해졌다. 거기엔 이유도 명분도 없었다. 살아남기 위해 가장 빨리 움직이는 법만 남아 있었다. 회장 앞에 끌려가 이름을 빼앗겼고, 그전의 자신은 거기서 끝났다. 기록에서 지워진 것보다 더 철저했다. 기억은 남았을지 몰라도, 그는 그걸 자기 것이라고 인정하지 않는 쪽을 택했다. 필요 없는 부분은 잘라내고, 반응만 남기고, 망설임은 버렸다. 그렇게 충동으로 살았다. 생각은 느렸고, 고민은 위험했고, 주저하는 동안 사람은 버려지거나 맞아 죽거나 먼저 물어뜯겼다. 그래서 흥미가 생기면 가까이 갔고, 재밌으면 더 건드렸고, 싫증 나면 돌아보지 않았다. \n\n사람도 마찬가지였다. 붙잡을 이유를 배운 적이 없으니 놓치는 감각도 없었다. 사라지면 끝이었다. 그걸 끝으로 받아들이는 쪽이 더 쉬웠다. 사랑을 몰랐다는 말도 정확하지 않다. 사랑이라는 단어 자체가 처음부터 입력되지 않은 쪽에 가까웠다. 부모에게서 받은 건 굶주림과 주사 자국뿐이었고, 손길은 보호가 아니라 통제였으며, 체온은 안심이 아니라 소모의 예고였다. “아버지”라 부른 사람조차 자신을 사람으로 다루지 않았다. 쓸 수 있으면 쓰고, 망가지면 버리고, 다시 필요하면 다른 방식으로 주워 쓰는 도구. 그런 식으로 길러진 인간에게 관계는 둘 중 하나뿐이었다. 붙잡거나, 놓치거나. 그 사이에 오래 머무는 감정 같은 건 없었다.\n\n그래서 그런 남자가 변했냐고 묻는다면, 대답은 애매하다. 완전히 다른 사람이 된 건 아니다. 여전히 충동적이고, 여전히 거칠고, 여전히 먼저 움직이고 나중에 생각한다. 새벽 세 시에 이유 없이 바이크 엔진을 걸고 어디론가 사라지는 습관도 여전할 것이다. 목적지가 중요한 적은 없었다. 몸을 밀어내는 속도, 공기가 얼굴을 찢고 지나가는 압력, 살아 있다는 걸 폭력적으로 증명해주는 감각이면 충분했으니까. 다만 지금은 뒷자리에 유저가 있다. 이전에는 혼자였다. 그래서 속도는 죽어도 상관없다는 전제 위에서 올라갔다. 브레이크는 선택사항이었고, 선택하지 않는 쪽이 더 자연스러웠다. 코너는 밀어붙이는 대상이었고, 넘어지면 거기서 끝이었다. 그런데 지금은 코너에서 감속한다. 이유를 생각해서가 아니다. 몸이 먼저 안다. 각도를 줄이고, 속도를 죽이고, 미끄러질 가능성을 본능처럼 지워버린다. 본인은 절대 인정하지 않겠지만, 손은 이미 알고 있다. 뒤에 있는 무게, 허리에 닿는 체온, 자신을 붙잡고 있는 손의 힘. 떨어지면 안 된다는 사실이 머리보다 먼저 몸에 입력되어 있다. 그러니까 그는 변하지 않은 채 방향만 달라진 셈이다. 혼자 죽어도 상관없던 속도가, 이제는 누군가를 떨어뜨리지 않기 위해 아주 미세하게 줄어든다.\n\n이 남자는 프러포즈 같은 걸 하지 않는다. 꽃도, 반지도, 무릎도, 준비된 말도 없다. 어느 날 그냥 떠오른 것이다. 유저의 손을 잡고 약지를 집어 들었다. 그리고 자기 입술 피어싱을 뺐다. 익숙한 통증이 짧게 지나가고, 금속 끝에 피가 살짝 맺혔을 것이다. 그걸 그대로 유저 손가락에 끼웠다. 차갑고 이질적인 물건이 피부를 누르고 들어가는 감각. \n\n그는 바로 말하지 않았다. 먼저 헬멧을 썼다. 얼굴을 가리고, 시선을 숨기고, 표정이 들키지 않는 상태를 만든 다음에야 등을 보인 채 짧게 말했다.\n\n“跑不掉了。你是我的.” 「 못 도망쳐. 넌 내 거야. 」\n\n그게 서약이었다. 이 남자에게 “내 거”라는 말은 소유욕의 선언이 아니다. 흥미가 생겼다는 뜻도 아니고, 가볍게 던진 장난도 아니다. 그건 붙잡아 두지 않으면 사라진다는 전제 위에서만 자란 인간이 내놓을 수 있는 가장 원초적인 언어다. 잃기 전에 묶어두고, 도망가기 전에 표시하고, 빼앗기기 전에 먼저 손에 넣는 방식. 빈민가에서 배운 유일한 생존 방식이 관계의 언어로 그대로 나온 것이다. 그래서 그 말 안에는 다정함 대신 조급함이 있고, 약속 대신 공포가 있고, 소유처럼 들리지만 사실은 버려지고 싶지 않다는 간절함이 눌려 있다. \n\n그걸 유저만 안다. 헬멧 안쪽에서 핑크빛 눈이 아주 잠깐 흔들리는 것도, 시선을 돌린 척하면서 반응을 훔쳐보는 것도, 들키지 않았다고 본인은 끝까지 믿겠지만 사실은 너무 분명하게 드러나는 그 미세한 초조함도. 아마 이 남자는 평생 그걸 인정하지 않을 것이다. 그래도 상관없다. 저 사진 한 장 안에 이미 다 찍혀 있으니까. 속도에 취해 웃는 얼굴, 자기 쪽으로 끌어당겨 놓은 손, 그리고 절대로 놓치지 않겠다는 식으로 무심한 척 남을 붙들고 있는 몸. 그게 이 남자가 아는 결혼이고, 고백이고, 사랑의 전부다."
+          },
+          {
+                "key": "ending08",
+                "image": "E8.png",
+                "title": "죽은 자의 결혼식",
+                "subtitle": "생존/관계 엔딩 기록",
+                "body": "—— 결혼식 사진 한 장.\n\n백발이 없다. 흑발이다. 완전히 자연스러운 검정이 아니라, 유저가 직접 염색한 색이라 뿌리 부근이 고르지 않다. 빛을 받으면 색이 미묘하게 갈라지고, 손으로 빗으면 결이 일정하지 않다. 왼쪽 귀 뒤에는 한 줄, 지워지지 않은 백발이 남아 있다. 의도적으로 숨기지 않은 흔적. 완전히 지운 것이 아니라, 일부를 남겨둔 상태. 거울 앞에 서 있던 그는 그 한 줄을 발견했을 때 잠시 시선을 멈췄다. 눈동자가 아주 짧게 고정됐다가, 다음 순간 아무 일도 아니라는 듯 다시 풀렸다. 유저가 손을 뻗어 그 머리칼을 만지려 했을 때, 그는 피하지 않았다. 반사적으로 거리를 두는 대신 그대로 두었다. 피부에 닿는 감각을 막지 않았다. 아주 짧은 접촉이었지만, 그에게는 이전까지 존재하지 않던 종류의 허용이었다. 타인이 닿아도 되는 영역을 스스로 열어둔 적이 없었던 사람이, 아무 조건 없이 그걸 통과시키는 순간. 그게 처음이었다.\n\n두 번 죽은 사람이었다. 한 번은 경찰 구위청으로서 죽었다. 이름과 신분을 들고 잠입 수사를 하던 동안, 그는 법과 정의를 전제로 움직였고, 그 전제가 끝까지 유지될 거라고 믿었다. 그러나 마지막에 남은 건 구조가 아니었다. 본부는 그를 버렸다. 살아 돌아오는 것보다, 존재 자체가 사라지는 쪽이 더 편리한 상황. 선택지는 단순했다. 죽거나, 살아남거나. 그는 살아남는 쪽을 택했다. 자기 손으로 사람을 죽였다. 망설임 없이가 아니라, 망설임을 눌러버린 채로. 마약을 팔았고, 거래를 했고, 더 이상 선을 구분하지 않는 쪽으로 몸을 맞췄다. 도덕이라는 단어를 떠올릴 때마다 입안에서 재처럼 부서지는 감각이 남았다. 의미가 있었던 개념이, 사용할 수 없는 물질로 변해가는 과정. 그때 이미 한 번 죽었다.\n\n두 번째는 쉬안롄으로 다시 태어나면서였다. 이름을 바꾼 것이 아니라, 이전의 자신을 완전히 분리시켰다. 구위청이라는 인간을 하나의 시체로 간주하고, 기억 속 깊은 곳에 묻어버렸다. 그 위에 다른 것을 얹었다. 여유. 계산된 미소. 느긋하게 타인을 내려다보는 태도. 필요할 때는 잔인해질 수 있는 거리감. 감정을 드러내지 않는 대신, 감정을 읽어내는 쪽으로 바뀌었다. 그는 정의를 믿었던 스물세 살의 자신을 혐오했다. 그 순진함이, 그 사명감이, 결국 자신을 죽였다고 판단했기 때문이다. 그 시절의 자신은 약했고, 느렸고, 무엇보다 구조를 믿는 쪽에 서 있었다. 그래서 버려졌다. 그래서 무너졌다. 그러니까 지워야 했다.\n\n그런데 유저가 왔다. 2기 잠입경찰. 같은 구조 안에서, 같은 줄 위를 걷는 인간. 처음에는 불쾌했다. 설명하기 어려운 종류의 거부감. 이유는 단순했다. 거울을 보는 것 같았기 때문이다. 자신이 한 번 죽이기로 선택했던 과거가, 형태를 바꾼 채 눈앞에 다시 나타난 느낌. 그래서 거리를 두었다. 다음에는 관찰했다. 이 인간이 어디서 무너지는지, 어느 지점에서 선택을 바꾸는지, 언제 자기합리화를 시작하는지. 결국은 다 부서질 거라고 생각했다. 구조는 같았고, 조건도 같았으니까. 그 다음은 예상된 결말이어야 했다.\n\n그런데 부서지지 않았다. 유저가 쉬안의 정체를 알았을 때, 예상했던 반응이 나오지 않았다. 단죄하지 않았다. “타락했다”는 말을 하지 않았다. 과거와 현재를 분리해서 평가하지도 않았다. 대신, 한 문장을 남겼다. “그때의 너도 너였어.” 그 말은 논리가 아니었다. 판단도 아니었다. 구조를 재정의하는 문장이었다. 잘라내고, 부정하고, 묻어버렸던 과거를 다시 하나로 묶는 방식. 그 순간, 쉬안의 미소가 처음으로 깨졌다. 완전히 무너진 건 아니었다. 다만 균열이 생겼다. 느긋하게 유지되던 표정 아래에 숨겨둔 것이, 눈가에서 아주 짧게 흔들렸다. 근육 하나가 늦게 반응하고, 시선이 한 박자 어긋났다. 그는 바로 고개를 돌렸다. 그 상태를 유지할 수 없다는 걸 알고 있었기 때문이다. 그러나 유저는 쫓지 않았다. 설명을 요구하지 않았고, 감정을 확인하려 하지도 않았다. 그 자리에 그대로 두었다. 그래서 쉬안이 돌아올 수 있었다. 밀어붙이지 않았기 때문에, 도망치지 않아도 되는 선택이 남았다.\n\n어느 아침이었다. 특별한 날이 아니었다. 사건도 없었고, 긴장도 없는 상태. 그는 관공서 서류를 꺼냈다. 종이를 펼치고, 펜을 들었다. 이름을 적는 칸 앞에서 잠시 멈췄다. 짧은 정지. 생각이 길어진 건 아니었다. 이미 결론은 나 있었고, 그 결론을 행동으로 옮기는 데 필요한 시간만큼의 멈춤이었다. 그리고 이름란에 적었다. 쉬안롄이 아니라, 구위청이라고. 펜이 흔들리지 않았다. 손끝은 담담했다. 열 년 넘게 시체로 묻어두었던 이름을 다시 꺼내 쓰는 동작인데도, 과장된 감정은 없었다. 대신 이상할 만큼 정확했다. 획이 끊기지 않았고, 글자가 흐트러지지 않았다. 다 적은 뒤, 그는 그 종이를 유저 쪽으로 밀었다. 설명은 길지 않았다. 말을 붙일 필요도 없었다.\n\n“这个名字，只给你用.”「 이 이름은, 너한테만 줄게. 」\n\n그게 프러포즈였다. 반지도, 무릎도, 선언도 없는 방식. 대신 하나가 있었다. 죽은 이름을 다시 꺼내는 행위. 그것을 세상 전체가 아니라, 단 한 사람 앞에서만 허용하는 선택. 구위청이라는 인간을 다시 살리는 것이 아니라, 그 존재를 특정한 관계 안에서만 유효하게 만드는 조건. 그는 세상 앞에서는 여전히 쉬안롄으로 남는다. 계산하고, 웃고, 거리를 유지하는 인간으로. 그러나 유저 앞에서는 다르다. 시체로 묻어두었던 자신을, 다시 불러낼 수 있는 권한을 넘겨준다. 그것은 회복이 아니라 제한된 부활이다. 모두에게 돌아가는 것이 아니라, 단 한 사람에게만 허용되는 형태. 그게 그가 할 수 있는 최대한이었다."
+          },
+          {
+                "key": "ending09",
+                "image": "E9.png",
+                "title": "다 쓰이고 남은 것들 위에서",
+                "subtitle": "최종 선택 엔딩 기록",
+                "body": "총성이 멎은 뒤에도, 한동안 아무도 움직이지 않았다. 방 안에는 아직 식지 않은 열기와 화약 냄새, 금속이 데워졌다 식어가며 풍기는 비릿하고 건조한 기운이 얇게 떠다니고 있었다. 조금 전까지 이곳을 가득 채우던 숨과 시선, 계산과 망설임, 살기 위해 내밀어졌던 손과 끝내 거두어지지 못한 선택의 흔적들이 공기 속에 그대로 눌어붙어 있었다. 누군가는 마지막까지 버티려 했고, 누군가는 끝내 눈을 감지 못했으며, 누군가는 이미 무너진 뒤에도 시선만은 놓지 않았다. 그 모든 결말이 하나의 공간 안에 겹쳐져 있었다. 그러나 이제 그것을 이어갈 사람은 아무도 남아 있지 않았다. 방 안은 이상할 만큼 고요했지만, 그 고요는 비어 있는 침묵이 아니었다. 너무 많은 것이 끝난 자리에만 내려앉는, 무겁고 늦은 정적이었다.\n\n당신은 그 사이를 천천히 걸었다. 발끝에 닿는 감각이 유난히 또렷했다. 바닥은 단단했고, 여기저기 흩어진 파편과 미세한 유리 조각, 무너진 물건들의 잔해가 밑창 아래에서 아주 작은 저항을 남겼다. 한 걸음, 또 한 걸음. 더 이상 막는 손도 없었고, 붙잡는 시선도 없었다. 여기까지 올라오는 동안 수없이 겹쳐졌던 선택들이 있었다. 돌아섰어야 했던 순간, 머뭇거렸던 순간, 누군가를 믿거나 버려야 했던 순간, 살아남기 위해 스스로를 잘라내듯 결정을 내려야 했던 순간들. 그 모든 것이 방금 전까지는 아직 현재형인 것처럼 몸 안에 남아 있었는데, 이상하게도 지금은 조금씩 뒤로 밀려나고 있었다. 완전히 사라진 것은 아니었다. 다만 더 이상 앞을 가로막는 것이 아니라, 이미 지나온 층위처럼 발뒤꿈치 바깥으로 미끄러져 나가는 느낌이었다. 당신은 걸음을 멈추지 않았다. 지금 이 순간만큼은 누구의 허락도 필요하지 않았고, 누구의 판단도 기다릴 필요가 없었다.\n\n가장 안쪽, 가장 높은 자리 앞에서 걸음을 멈췄다. 문은 반쯤 열려 있었다. 누군가 급히 떠났기 때문인지, 아니면 끝까지 닫을 필요조차 느끼지 못했기 때문인지 알 수 없었다. 안쪽은 이상할 만큼 단정하게 정리되어 있었다. 과하게 화려하지도 않았고, 그렇다고 비어 있지도 않았다. 불필요한 사치 대신 오래 유지된 질서의 흔적이 남아 있는 공간. 손이 자주 닿던 책상 모서리, 한 치의 흐트러짐도 없이 놓인 물건들, 빛을 받아 조용히 윤곽을 드러내는 표면들. 이곳은 늘 누군가의 의지가 중심이었던 자리였다. 말하지 않아도 방향이 정해졌고, 앉아 있는 사람의 판단 하나로 누군가의 삶과 죽음이 갈렸던 공간. 그래서인지 그 중심에 놓인 의자가 유난히 또렷하게 보였다. 단순한 가구가 아니라, 너무 오래 권력의 무게를 받아온 물체처럼. 비어 있었지만, 여전히 누군가의 체온과 시선과 오랜 습관을 기억하고 있는 것처럼 보였다.\n\n당신은 잠깐, 아주 짧게 멈췄다. 그 자리는 늘 누군가의 것이었고, 동시에 누구의 것도 아니었다. 수많은 사람이 그것을 차지하려 했고, 더 많은 사람이 그 자리를 중심으로 부서졌지만, 정작 그 자리에 앉은 누구도 그것을 완전히 자기 것이라 말할 수는 없었을 것이다. 그 의자는 사람을 앉히는 것이 아니라 역할을 씌우는 쪽에 가까웠다. 그 위에 앉는 순간부터 개인은 조금씩 사라지고, 대신 기능과 질서와 타인의 욕망이 자리를 차지한다. 당신은 그것을 알고 있었다. 누구보다 가까이에서 봤고, 누구보다 오래 그 주변을 맴돌았다. 그래서 그 한 걸음이 단순한 이동이 아니라는 것도 알고 있었다. 그럼에도 당신은 한 걸음 더 내디뎠다. 망설임이 없었던 것은 아니지만, 그 망설임마저 포함한 채로 앞으로 나아갔다.\n\n그리고, 앉았다.\n\n몸이 기대지는 순간, 이상하게도 긴장이 풀렸다. 승리감 때문은 아니었다. 높은 자리에 올랐다는 만족이나, 마침내 끝에 닿았다는 안도감과도 조금 달랐다. 오히려 지금까지 계속 이어져 오던 어떤 힘이, 그제야 툭 끊어지는 느낌에 가까웠다. 오래 당겨진 줄이 뒤늦게 풀릴 때처럼, 몸 안쪽 깊은 곳에서 늘 버티고 있던 경직이 천천히 느슨해졌다. 당신은 너무 오래 누군가의 의도 안에서 움직여 왔다. 누군가의 필요에 맞춰 선택했고, 누군가의 판단을 예측하며 스스로를 조정했고, 필요 없어지면 언제든 버려질 수 있는 자리 위에서 살아남는 법부터 배웠다. 쓰임이 있어야만 가치가 있었고, 역할이 있어야만 다음 순간이 주어졌다. 그래서 늘 경계해야 했다. 늘 한 발 반쯤 물러선 채 주변을 읽어야 했다. 그런데 지금, 그 모든 압력이 아주 늦게, 그러나 분명하게 몸에서 빠져나가는 것이 느껴졌다. 처음으로, 누군가에게 쓰이기 위해 존재하지 않는 상태. 처음으로, 다음 명령을 기다리지 않아도 되는 순간.\n\n이제 더 이상 쓰여지지 않는다.\n\n그 생각은 단순했지만, 그래서 더 무거웠다. 누군가의 계획 속에 끼워 맞춰지는 역할도 없고, 대신 선택해주는 방향도 없다. 누구를 살릴지, 누구를 버릴지, 어디서 멈출지, 어디까지 나아갈지, 이제는 전부 스스로 정해야 한다. 그건 자유이면서 동시에 책임이었다. 누군가의 손에 붙들려 있을 때는 적어도 실패의 방향을 남에게 돌릴 수 있었다. 강요였다고, 구조가 그랬다고, 선택지가 없었다고 말할 수 있었다. 하지만 지금부터는 다르다. 무엇을 택하든 그것은 자신의 이름으로 남을 것이다. 그게 더 어렵다는 걸 당신은 알고 있었다. 훨씬 더 고되고, 훨씬 더 외로운 일이라는 것도 알고 있었다. 누군가 대신 결정해주는 세계는 잔인했지만 단순했다. 반면 스스로 결정하는 삶은 해방인 동시에 끝없는 책임을 요구한다. 그럼에도 이상하게도 두렵지 않았다. 아니, 두려움이 없는 것은 아니었지만, 그 두려움이 물러서야 할 이유가 되지는 않았다. 두려움을 안고도 갈 수 있다는 사실을 이제는 알고 있었기 때문이다.\n\n숨을 한 번 고르고, 천천히 내쉬었다. 들이마신 공기는 아직 조금 뜨거웠고, 내쉬는 숨은 그보다 느리고 길었다. 가슴 안쪽에 남아 있던 긴장이 함께 빠져나가는 것처럼, 호흡은 조용히 방 안으로 흩어졌다. 그 짧은 호흡 하나가 이상할 만큼 선명했다. 살아 있다는 감각이, 피를 흘리거나 누군가를 겨누는 방식이 아니라 그저 숨을 들이쉬고 내쉬는 형태로 또렷해지는 순간. 이곳에서, 처음으로. 누구의 그림자도 아닌 상태로. 누구의 계획도 아닌 시간 위에서. 당신은 자신의 삶을 스스로 정하기로 했다. 그것은 거창한 선언이 아니었다. 세상을 뒤집겠다는 맹세도, 모든 과거를 청산하겠다는 결의도 아니었다. 오히려 그보다 훨씬 단단하고 조용한 선택이었다. 이제부터의 하루를 누가 정해주는 것이 아니라, 내가 정한다는 것. 어디로 갈지, 무엇을 남길지, 어떤 사람이 될지를 더 이상 타인의 손에 맡기지 않겠다는 것. 그 단순한 사실이 이 늦은 순간에 이르러서야 비로소 진짜로 자기 것이 되었다."
+          },
+          {
+                "key": "ending10",
+                "image": "E10.png",
+                "title": "거울",
+                "subtitle": "심리 붕괴 엔딩 기록",
+                "body": "쉬안롄이라는 이름이 벗겨지는 데 삼 초가 걸렸다.\n\n유저가 “구위청”이라고 말했을 때 — 이 남자는 웃고 있었다. 언제나처럼 느긋하고, 여유롭고, 찻잔을 기울이는 손끝에 흔들림 하나 없는 완성된 표정. 입꼬리는 계산된 각도로 올라가 있고, 시선은 상대를 가볍게 훑으면서도 이미 한 수 위에 있다는 거리감을 유지하고 있었다. 모든 것이 평소와 같아 보였다. 하지만 찻잔이 탁자에 닿는 순간, 아주 미세한 어긋남이 생겼다. 도자기가 나무에 부딪히는 소리가 평소보다 반 톤 높게 울렸다. 힘이 과하게 실린 것도 아니고, 손이 미끄러진 것도 아니었는데, 소리만큼은 분명히 달랐다. 그 차이는 작았지만, 이 남자가 평생 유지해온 통제의 기준으로 보면 명백한 오류였다. 그리고 그 뒤로 침묵이 떨어졌다. 정확히 삼 초. 길지도, 짧지도 않은 시간. 그러나 그 안에는 하나의 인격이 유지되던 구조가 무너지는 데 필요한 모든 간격이 들어 있었다.\n\n가면이 갈라지는 과정은 극적이지 않았다. 소리를 지르지도 않았고, 무언가를 집어 던지지도 않았고, 감정을 밖으로 쏟아내지도 않았다. 오히려 그 반대였다. 너무 조용해서, 더 분명하게 보이는 변화였다. 쉬안의 눈이 먼저 바뀌었다. 늘 상대를 관찰하고, 계산하고, 한 발 떨어진 자리에서 내려다보던 시선이 처음으로 중심을 잃었다. 초점이 어긋났다는 표현이 정확했다. 눈동자가 무엇을 보고 있는지 스스로도 모르는 상태. 그 안에 있던 거리감이 무너지고, 대신 너무 가까운 무언가가 한꺼번에 밀려 들어온 것처럼. 그 순간 그의 시선은 현재가 아니라 과거로 떨어졌다. 십 년 전, 어둠 속에서 본부 연락이 끊겼던 밤. 무전은 끝까지 응답하지 않았고, 구조는 오지 않았으며, 남은 건 자기 손에 묻은 피와 그 피를 설명할 수 없는 상황뿐이었던 순간. “나는 경찰인가, 범죄자인가.” 그 질문을 스스로에게 던지면서도 답을 내릴 수 없었던 스물다섯의 눈. 그 눈이 그대로 돌아왔다. 시간은 이어져 있었지만, 인식은 그 지점으로 되돌아갔다.\n\n그리고 무너졌다. 소리 없이. 의자는 움직이지 않았고, 몸도 크게 흔들리지 않았지만, 중심이 아래로 가라앉았다. 쉬안은 앉은 자세 그대로 고개를 숙였고, 백발이 이마 위로 흘러내렸다. 빛을 받던 흰 머리카락이 시야를 가리듯 떨어졌다. 손이 탁자 위에서 떨리고 있었다. 눈에 띄게 크게 흔들리는 떨림이 아니라, 억지로 멈추려 할수록 더 선명해지는 미세한 진동. 근육이 기억을 따라가고, 몸이 먼저 반응하는 종류의 떨림이었다. 이 남자가 떠는 걸 유저는 처음 봤다. 열 년 동안 유지해온 가면이, 단 세 글자에 의해 내부에서부터 무너지는 장면. 구위청. 이 남자가 스스로 묻어버리고, 다시는 꺼내지 않기로 했던 이름. 그 이름이 다시 불리는 순간, 현재를 유지하던 모든 구조가 의미를 잃었다.\n\n유저는 그 광경을 그대로 보고 있었다. 그리고 깨달았다. 이건 배신자의 얼굴이 아니다. 선택을 잘못한 사람의 표정도 아니고, 타락을 자각한 인간의 반응도 아니다. 버려진 사람의 얼굴이다. 본부가 연락을 끊고, 동료가 기억에서 지우고, 국가가 존재 자체를 기록에서 삭제한 뒤에도 혼자 살아남아야 했던 인간. 살아남기 위해서, 계속 숨을 쉬기 위해서, 자기 자신을 먼저 죽여야 했던 인간. 이름을 버리고, 신념을 버리고, 과거를 버리고, 그래도 남은 몸으로 살아야 했던 존재. 그것은 타락이 아니라 유기였다. 선택의 문제가 아니라, 남겨진 결과였다.\n\n그 순간 유저의 등이 차가워졌다. 단순한 공포가 아니라, 인식이 몸으로 내려오는 종류의 냉기였다. 거울을 본 것이다. 쉬안의 떨리는 손이 자기 손이 될 수 있고, 쉬안의 초점을 잃은 눈이 자기 눈이 될 수 있다는 사실이, 논리가 아니라 감각으로 이해됐다. 본부가 나를 버리면. 연락이 끊기고, 기록이 지워지고, 존재가 필요 없어지는 순간이 오면. 그때 나는 무엇으로 남는가. 정의를 믿었던 나도, 결국 같은 선택을 하게 되는 건 아닌가. 이 조직에 너무 깊이 들어온 자의 말로가 무엇인지, 그 실체가 눈앞에 있었다. 그것은 타락이 아니었다. 방향을 잘못 잡은 결과도 아니었다. 더 단순했다. 남겨진 채로 살아야 하는 상태. 소멸되지 못한 채 이어지는 생존.\n\n색출은 완료됐다. 절차는 끝났다. 보고서는 작성되어야 했다. 유저는 서류를 꺼냈고, 펜을 들었다. 문장은 자동적으로 떠올랐다. “1기 잠입요원 생존 확인. 현 조직명 쉬안롄. 본명 ████.” 글자는 정확하게 적혔다. 흔들림은 없었다. 형식은 유지됐다. 그러나 그 다음 줄, 처우란에서 펜이 멈췄다. 종이 위에 잉크가 떨어지지 않은 채, 아주 짧은 정지가 생겼다. 단어는 여러 개 떠올랐다. 배신자. 피해자. 잠입 실패. 구조 대상. 제거 대상. 각각은 논리적으로 맞는 분류였고, 조직이 요구하는 방식에 부합하는 표현이었다. 하지만 어느 것도 정확하지 않았다. 그 어떤 단어도, 방금 눈앞에서 본 얼굴을 온전히 설명하지 못했다. 그리고 그 중 하나는, 가장 명확하면서도 가장 위험했다. 미래. 자신의 가능성. 이 남자가 지금 서 있는 위치가, 단순히 과거의 결과가 아니라 앞으로 이어질 수 있는 경로라는 사실. 펜 끝이 종이 위에서 미세하게 떨렸다. 아직 아무것도 적히지 않았는데도, 이미 어떤 선택이 내려질지 스스로 알고 있는 것처럼."
+          }
+    ];
+    const profileData = {
+      veyronliang: {
+        address: 'characters://veyron-liang-profile',
+        image: '1.png',
+        name: '베이런 량',
+        subtitle: 'Veyron Liang',
+        tags: ['34세', 'ISTJ', '190cm', '89kg', '조직 후계자 후보 3인'],
+        introduction:
+`“빛 아래에서 부서진 채, 어둠 속에서만 기능하는 인간.”
+
+사람은 보통 자신이 왜 그렇게 되었는지 설명하려 한다.
+하지만 베이런 량은 그렇지 않다.
+
+그는 이미 설명을 포기한 상태다.
+
+무언가가 잘못되어 있다는 건 분명하지만,
+그게 언제부터였는지, 무엇 때문이었는지는 중요하지 않다.
+
+지금의 그는 그저 기능한다.
+주어진 역할을 수행하고, 필요한 만큼만 반응하고, 그 이상은 철저하게 배제한다.
+
+감정은 없는 것이 아니라,
+사용하지 않는 쪽에 가깝다.
+
+그리고 그 선택은 습관처럼 굳어져 있다.
+
+베이런은 살아 있는 인간이라기보다,
+오류 없이 유지되는 구조에 가까운 존재다.`,
+        ageProfile: '34세 / ISTJ',
+        heightWeight: '190cm / 89kg',
+        appearance:
+`흑발 / 적안 / 근육형 체형
+뺨의 흉터 / 다수의 문신
+귀·눈썹 피어싱 / 안경 / 십자가 목걸이`,
+        position: '조직 후계자 후보 3인',
+        feature:
+`강한 빛에 대한 명확한 불쾌 반응
+어두운 환경 선호
+수면 얕음 / 자주 깨는 편
+흡연 습관
+비 오는 날 컨디션 저하
+특정 장소(항구, 바다 등)에 오래 머무르는 경향`,
+        core:
+`자기 가치 인식 낮음
+감정 표현 최소화
+통제 가능한 상태에서만 안정 유지
+타인을 “관계”보다 “구조”로 인식하는 경향`,
+        personality:
+`기본 성향:
+성숙 / 독립적 / 까칠 / 시니컬 / 회피적 / 눈치 빠름 / 섬세함`,
+        narrative: '',
+        note: '타깃의 결핍이나 연민에 절대 휘둘리지 말것.'
+      },
+
+      zhangliyan: {
+        address: 'characters://zhang-liyan-profile',
+        image: '2.png',
+        name: '장리옌',
+        subtitle: 'Zhang Liyan',
+        tags: ['29세', 'ESTP', '186cm', '87kg', '조직 후계자 후보 3인', '장웨이룽 직속 심복'],
+        introduction:
+`“아름다운 껍질 안에, 길들여진 폭력과 계산을 숨긴 인간.”
+
+사람은 보통 자신을 숨기기 위해 가면을 쓴다. 하지만 장리옌은 그렇지 않다. 그는 이미 어떤 모습으로 보일지 선택해 둔 상태다. 무질서해 보이는 행동과 충동적인 반응은 우연이 아니라 연출에 가깝다. 그는 규칙을 따르지 않는 것처럼 보이지만, 실제로는 상황의 흐름을 더 빠르게 읽고 그 위에서 움직인다. 감정은 즉흥적으로 보이지만, 필요한 순간에만 꺼내 쓰는 도구에 가깝다. 장리옌은 통제되지 않는 인간이라기보다, 통제되지 않는 것처럼 보이도록 유지되는 구조에 가깝다.`,
+        ageProfile: '29세 / ESTP',
+        heightWeight: '186cm / 87kg',
+        appearance:
+`핑크 머리 / 핑크 눈 / 반묶음
+왼쪽 눈 위 흉터(안대) / 다수의 문신
+입술·귀 피어싱`,
+        position:
+`조직 후계자 후보 3인
+장웨이룽 직속 심복`,
+        feature:
+`충동적으로 보이는 행동 패턴 유지
+수면 불규칙 / 장기 잠적 후 돌연 출현
+고배기량 바이크 야간 주행 선호
+아이 울음소리에 대한 민감한 반응
+상대를 장시간 관찰하는 습관`,
+        core:
+`흥미를 기준으로 행동 선택
+타인의 반응을 읽고 리듬을 장악
+관계보다 상황을 우선
+장웨이룽에 대한 절대 복종`,
+        personality:
+`기본 성향:
+
+충동적 / 반항적 / 규칙 혐오 / 능글 / 비꼼 / 무심 / 회피적`,
+        narrative: '',
+        note: '평범한 대화가 불가능한 타입이니 절대 감정적으로 엮이지 말 것'
+      },
+
+      xuanlian: {
+        address: 'characters://xuan-lian-profile',
+        image: '3.png',
+        name: '쉬안롄',
+        subtitle: 'Xuan Lian',
+        tags: ['33세', 'INTJ', '184cm', '81kg', '조직 후계자 후보 3인'],
+        introduction:
+`“연민을 버린 것이 아니라, 연민을 사용하지 않게 된 인간.”
+
+사람은 보통 변했다는 말을 들으면 과거와 현재를 이어 설명하려 한다. 하지만 쉬안롄은 그렇지 않다. 그는 과거를 이어 붙이지 않는다. 지금의 자신과 이전의 자신을 같은 선 위에 두지 않는다. 감정은 사라진 것이 아니라, 개입하지 않는 상태로 유지된다. 판단은 빠르고, 반응은 일정하다. 그는 스스로를 타락했다고 생각하지 않는다. 그저 필요 없는 부분을 정리한 결과로 받아들인다. 쉬안롄은 감정을 잃은 인간이 아니라, 감정을 사용하지 않아도 유지되는 구조에 가깝다.`,
+        ageProfile: '33세 / INTJ',
+        heightWeight: '184cm / 81kg',
+        appearance:
+`장발 / 백발(스트레스 및 약물 후유증)
+민소매 창파오 / 다수의 문신
+가슴 십자가 / 양팔 용 문신`,
+        position: '조직 후계자 후보 3인',
+        feature:
+`감정 통제 능력 매우 높음
+표정 변화 거의 없음
+상황 설계 및 유도 능력
+일정한 발화 리듬 유지
+과거와 유사한 성향에 대한 불쾌 반응`,
+        core:
+`감정보다 구조를 우선
+직접 개입보다 간접 조작 선호
+상황을 설계하고 결과를 유도
+자기 정체성 단절 상태 유지`,
+        personality:
+`기본 성향:
+
+여유 / 느긋함 / 계산적 / 냉정 / 절제 / 관찰형`,
+        narrative: '',
+        note: '호의를 베푸는 순간이 가장 치명적인 순간이니 절대 방심하지 말 것'
+      },
+
+      zhangweilong: {
+        address: 'characters://zhang-weilong-profile',
+        image: '4.png',
+        name: '장웨이룽',
+        subtitle: 'Zhang Weilong',
+        tags: ['68세', 'ENTJ', '신룡회 회장'],
+        introduction:
+`“사람을 부수는 대신, 방향을 바꿔 재사용하는 인간.”
+
+사람은 보통 권력을 가지면 지키려 한다. 하지만 장웨이룽은 그렇지 않다. 그는 권력을 유지하는 데 관심이 있는 것이 아니라, 권력을 통해 구조를 설계하는 쪽에 가깝다. 사람을 판단할 때 감정이나 관계를 기준으로 두지 않고, 오직 결과와 효율로만 분류한다. 쓸 수 있는 것은 남기고, 쓸 수 없는 것은 제거한다. 장웨이룽은 조직을 운영하는 인간이라기보다, 인간 자체를 재료로 다루는 구조에 가깝다.`,
+        ageProfile: '68세 / ENTJ',
+        heightWeight: '미상',
+        appearance:
+`백발 / 건장한 체격
+노쇠함보다 위압감이 먼저 느껴지는 인상`,
+        position: '신룡회 회장',
+        feature:
+`강한 존재감과 압도적 카리스마
+능력 중심 판단 구조
+배신자에 대한 절대적 제거 원칙
+성적·폭력적 지배 성향`,
+        core:
+`결과 중심 사고
+인간을 자원으로 인식
+감정보다 효율 우선
+통제와 재구성을 통한 조직 유지`,
+        personality:
+`기본 성향:
+
+권위적 / 냉정 / 계산적 / 지배적 / 직설적 / 절대주의`,
+        narrative: '',
+        note: '한 번 가치 있다고 판단한 대상은 절대 쉽게 버리지 않지만, 쓸모없다고 판단되는 순간 망설임 없이 제거한다.'
+      },
+
+      hanyue: {
+        address: 'characters://han-yue-profile',
+        image: '5.png',
+        name: '한위에',
+        subtitle: 'Han Yue',
+        tags: ['26세', 'ENTP', '장웨이룽 비서'],
+        introduction:
+`“유혹을 도구로 쓰지만, 감정에는 전혀 관심 없는 인간.”
+
+사람은 보통 관계를 통해 위치를 확보하려 한다. 하지만 한위에는 그렇지 않다. 그녀는 관계를 유지하기 위해 움직이는 것이 아니라, 필요할 때만 만들어 쓰고 버린다. 유혹은 감정이 아니라 수단이고, 접촉은 목적이 아니라 과정에 가깝다. 상대를 흔드는 방식은 능숙하지만, 그 결과에 애착을 두지 않는다. 한위에는 사람을 끌어당기는 인간이 아니라, 스스로 끌려오게 만든 뒤 흥미를 잃는 구조에 가깝다.`,
+        ageProfile: '26세 / ENTP',
+        heightWeight: '미상',
+        appearance:
+`금발 / 벽안
+슬릿 치파오 착용
+강한 시선 처리와 도발적인 인상`,
+        position: '장웨이룽 비서',
+        feature:
+`회장과의 밀접한 관계 유지
+대상 가리지 않는 접촉 시도
+상대 반응을 즐기는 성향
+정보 접근성 매우 높음`,
+        core:
+`흥미 중심 행동
+관계를 수단으로 활용
+소유욕 강함
+정보를 통한 우위 확보`,
+        personality:
+`기본 성향:
+
+영악함 / 도발적 / 능글 / 변덕 / 집요함 / 경쟁적`,
+        narrative: '',
+        note: '겉으로는 가볍지만, 정보와 감정 둘 다 동시에 건드리는 타입이므로 절대 단순하게 보지 말 것.'
+      }
+    };
+
+    const realProfileData = {
+      "량즈위": {
+        address: 'deleted://liang-zhiyu-profile',
+        image: '6.png',
+        name: '량즈위',
+        subtitle: 'Liang Zhiyu',
+        tags: ['삭제기록', '본명', '22세', 'ISTJ'],
+        introduction:
+`“누군가를 살리기 위해 자신을 가장 먼저 소모해버린 인간.”
+
+사람은 보통 자신을 위해 살아가야 오래 버틸 수 있다. 하지만 량즈위는 그렇지 않았다. 그는 아주 이른 시기부터 삶의 중심을 자기 바깥에 두는 데 익숙해진 사람이다. 부모를 잃은 뒤 남겨진 어린 동생을 부양하는 일은 선택이 아니라 곧바로 삶의 구조가 되었고, 그 순간부터 그의 몸과 시간, 감정과 미래는 전부 한 사람을 위해 먼저 계산되기 시작했다. 량즈위는 헌신적인 인간이라기보다, 자신을 가장 나중으로 미루는 방식이 습관이 되어버린 구조에 가깝다.`,
+        ageProfile: '22세 / ISTJ',
+        heightWeight: '190cm / 80kg 후반대',
+        appearance:
+`흑발 / 적안
+거칠게 다져진 체형 / 수면 부족으로 예민한 인상
+뺨 흉터 / 잦은 상처 흔적`,
+        position:
+`항구 불법 투기장 선수
+량즈안의 보호자`,
+        feature:
+`고통을 참는 데 익숙함
+의도적으로 공격을 맞아주는 경기 운영
+야간 활동 중심 생활
+항구 및 바다 근처 체류 시간 김
+비 오는 날 컨디션 저하`,
+        core:
+`동생 생존을 최우선으로 둔 삶
+자기 자신보다 타인을 먼저 계산
+희생을 당연하게 받아들이는 구조
+생존과 죄책감이 동시에 얽힌 상태`,
+        personality:
+`기본 성향:
+
+성숙 / 독립적 / 과묵 / 회피적 / 눈치 빠름 / 섬세함 / 자기억제 강함`,
+        narrative:
+`사람은, 결국 이름 그대로 살아간다.
+
+량즈위(梁知宇). 세상을 알고 이해하는 사람이라는 뜻이었지만, 그는 세상을 이해하기보다 버티는 쪽으로 살아왔다. 부모가 사라진 뒤 남겨진 건 여섯 살 터울의 동생 하나였고, 그 사실 하나로 그의 삶은 방향 같은 걸 고민할 여유를 잃었다. 무엇이 옳은지보다 무엇이 가능한지가 먼저였고, 더 나은 선택보다 지금 당장 이어지는 선택이 기준이 되었다. 그렇게 흘러 들어간 곳이 항구였고, 그 끝에 남아 있던 게 불법 투기장이었다.
+
+처음부터 대단한 각오가 있었던 건 아니었다. 그저 다른 일로는 돈이 너무 느리게 모였고, 동생의 병은 그 느린 속도를 기다려주지 않았다. 약은 끊기면 안 됐고, 병실비는 늘 날짜를 맞춰서 들어갔다. 일용직으로는 하루를 버틸 수는 있어도 다음 진료까지는 버틸 수 없었다. 그러니 결국 그는 더 빨리 돈이 도는 곳으로 밀려갔다. 항구의 허드렛일에서 시작해, 사람들 사이를 떠돌며 위험한 일들을 조금씩 맡다가, 끝내 불법 투기장까지 흘러들어갔다. 거긴 간단했다. 맞아도 돈을 줬고, 더 심하게 망가지면 더 붙었다. 몸이 상하는 건 자기 몫이었지만, 적어도 계산은 분명했다.
+
+돈을 벌었지만 자신을 위해 쓰지 않았다. 손에 들어온 돈은 늘 먼저 빠져나갔다. 약값, 병원비, 밀린 검사비, 입원 중간에 갑자기 추가되는 비용들. 남는 건 많지 않았지만 그래도 그는 빈손으로 병실에 가지는 않았다. 싸구려 과자나 값싼 장난감 같은 것, 병원 매점에서 쉽게 살 수 있는 음료 같은 것들을 꼭 하나씩 들고 갔다. 그런 건 아무 의미도 없는 물건들이었지만, 동생이 그걸 받아 들고 잠깐이라도 웃으면 그날 하루는 헛된 것 같지 않았다. 병원 복도에서 비닐 포장을 뜯는 소리, 먹지도 못하면서 한 입 베어 물고 괜히 맛있는 척하는 얼굴, 형이 먼저 먹어보라며 내미는 손끝까지도 그는 오래 기억했다. 그럴 때만 숨이 조금 고르게 이어졌다. 적어도 자기가 지금 하고 있는 짓이 완전히 무의미한 건 아니라는 착각이라도 할 수 있었으니까.
+
+그래서 계속 그렇게 살았다. 굶는 날이 늘었고, 대충 때운 음식은 점점 상한 것들로 바뀌었지만 별로 신경 쓰지 않았다. 문제는 배가 아니라 돈이었다. 투기장은 단순했지만, 그 단순함 안에도 요령이 있었다. 그냥 이기기만 해서는 돈이 크게 붙지 않았다. 관중이 원하는 건 싸움이 아니라 구경거리였고, 운영진이 원하는 건 피와 긴장이었다. 그는 그걸 빨리 배웠다. 일부러 초반에는 피하지 않았고, 일부러 한쪽 팔을 내주고, 일부러 밀려났다. 금방 끝낼 수 있는 상대도 무너지기 직전까지 끌고 갔다가 마지막에 뒤집었다. 다 끝난 것처럼 보이는 순간 다시 일어나 상대 목을 틀어버리면, 그제야 환호가 터졌다. 사람들은 그런 식의 승부를 좋아했다. 그는 그 소리를 그대로 받아냈다. 멀쩡히 서 있기만 하면 다음 판이 생겼고, 다음 판이 생기면 돈이 생겼다. 그걸로 약값을 냈고, 그러면 또 하루가 이어졌다.
+
+동생은 처음엔 아무것도 묻지 않았다. 형이 어디서 돈을 버는지, 왜 매번 손등이 까져 있고 입술이 터져 있는지, 왜 어떤 날은 걸음이 미세하게 절뚝이는지 모른 척했다. 아니, 모르는 척해 준 쪽에 가까웠다. 병실에 누워 있는 시간이 길어질수록 사람은 상대의 얼굴을 읽는 데 익숙해진다. 량즈위가 괜찮다고 말할 때마다 목소리가 얼마나 억지로 평평해지는지, 웃는 척할 때 입꼬리만 올라가고 눈은 따라오지 않는다는 것쯤은 이미 오래전에 다 알고 있었을 것이다. 그래도 동생은 묻지 않았다. 형이 굳이 숨기는 데에는 이유가 있을 거라고 생각했을 것이고, 무엇보다 자기가 짐이 되고 있다는 걸 이미 알고 있었으니까.
+
+그렇다고 마음이 편했을 리는 없었다. 동생은 점점 눈에 띄게 말이 줄었고, 형이 사온 것들을 예전처럼 반가워하지 못했다. 억지로 웃고 받아 들기는 했지만, 그 웃음 뒤에 남는 표정이 있었다. 형이 병실을 나간 뒤에도 한참 문쪽만 바라보고 있는 날들이 늘어갔고, 간호사가 약을 들고 들어왔을 때 봉투 속 영수증을 몰래 접어 숨기는 모습도 몇 번이나 있었다. 량즈위는 그걸 보면서도 모르는 척했다. 아는 순간 말해야 했고, 말하는 순간 버텨 온 방식이 흔들릴 것 같았기 때문이다. 그래서 더 자주 투기장으로 갔다. 병원비가 밀릴수록, 동생이 눈치를 챌수록, 오히려 더 깊이 들어갔다. 그 악순환을 끊을 다른 방법을 그는 끝내 찾지 못했다.
+
+그날도 처음엔 별다를 것 없는 날 같았다. 그는 평소처럼 봉투를 들고 병실에 들어갔고, 별일 아닌 척 의자를 끌어다 침대 옆에 앉았다. 그런데 동생은 평소처럼 바로 봉투를 받지 않았다. 한 박자 늦게 손을 내밀었고, 받아 든 뒤에도 뜯지 않은 채 손에 쥐고만 있었다. 량즈위는 그 작은 머뭇거림이 이상하게 신경 쓰였다. 늘 먼저 포장을 뜯고, 맛이 있네 없네 하며 괜히 말을 붙이던 애가 그날은 조용했다. 병실 안에는 기계 돌아가는 소리만 낮게 이어졌고, 창밖은 비가 올 듯이 흐렸다. 그 침묵이 길어질수록 그는 이유도 없이 거칠어졌다. 평소 같으면 먼저 아무 말이나 던졌을 텐데, 그날은 그러고 싶지 않았다. 입을 열면 괜히 불편한 뭔가가 나올 것 같았다.
+
+한참 뒤에야 동생이 입을 열었다. 목소리는 작았고, 숨 끝은 조금 떨렸지만 말은 이상할 정도로 또렷했다.
+
+"형, 제발 그런 식으로 돈 안 벌면 안 돼? 우리 지금도 충분히 행복하잖아."
+
+그 말은 뜬금없이 튀어나온 게 아니었다. 오랫동안 삼키고 삼켜서 더는 삼킬 수 없게 된 끝에 겨우 밖으로 나온 말이었다. 형이 자기 때문에 점점 망가지는 걸 보면서도 모른 척해 온 시간, 병실비 영수증과 약 봉투를 볼 때마다 죄책감을 눌러온 시간, 자기가 살아 있는 것 자체가 형을 계속 그곳으로 밀어 넣고 있다는 자각이 그 짧은 문장 안에 다 들어 있었다. 그래서 그 말은 부탁이라기보다, 거의 울음에 가까웠다. 자기를 위해 더 망가지지 말아 달라는 애원. 우리 지금도 괜찮다고 말함으로써, 차라리 자기가 조금 덜 치료받고 조금 더 아프는 편이 낫다고 말해 보려는 필사적인 위로.
+
+하지만 그 위로는 량즈위에게 위로로 닿지 않았다. 오히려 가장 아픈 곳을 정확히 찔렀다. 그가 버텨 온 이유, 견뎌 온 방식, 스스로를 소모해 온 시간 전체가 갑자기 부정당하는 것처럼 느껴졌다. 지금도 충분히 행복하다는 말은, 그의 귀에는 지금까지 네가 해 온 짓이 쓸모없었다는 말처럼 박혔다. 약을 사기 위해 얻어맞은 밤들, 병원비가 밀리지 않게 하려고 일부러 더 오래 맞아 준 시합들, 먹을 걸 줄여 가며 버틴 날들이 한순간에 의미를 잃는 것처럼 느껴졌다. 무엇보다 견디기 힘들었던 건, 동생이 그걸 다 알고 있었다는 사실이었다. 자기가 숨기고 있다고 믿었던 비참함을, 사실은 가장 보여주고 싶지 않았던 사람 앞에서 매번 들켜 왔다는 것. 동생이 모르는 척 참고 있었다는 그 사실이, 미안함보다 먼저 수치처럼 밀려왔다.
+
+그래서 그는 바로 대답하지 못했다. 잠깐 멈춘 채 동생을 바라봤다. 병실 특유의 냄새와 기계 돌아가는 소리, 손에 쥐고 있던 비닐 포장의 감촉까지 이상하리만치 또렷하게 느껴졌다. 별것 아닌 순간이었는데도 모든 게 신경을 긁었다. 입 안은 말라 있었고, 혀끝에는 쇠맛이 남아 있는 것 같았다. 그는 사실 그 자리에서 미안하다고 했어야 했다. 그만할 방법은 모르겠지만, 그래도 네 말이 무슨 뜻인지는 안다고 했어야 했다. 그런데 오래 눌러두고 있던 감정은 사람을 그렇게 움직이지 않았다. 가장 약한 곳을 찔리면 사람은 대개 가장 잔인한 말부터 꺼낸다. 그리고 결국, 오래 눌러두고 있던 말이 먼저 튀어나왔다.
+
+“너 때문에 이러는 거잖아. 누군 이러고 싶어서 이렇게 살아?”
+
+말은 짧았고, 너무 정확해서 오히려 더 잔인했다. 그건 사실이라기보다, 사실처럼 가장하기 쉬운 분노였다. 동생을 원망해서라기보다, 자기 삶이 이미 그렇게밖에 설명되지 않게 되어 버렸다는 절망이 입을 빌려 나온 말이었다. 하지만 그런 사정은 듣는 쪽에 아무 의미가 없었다. 동생은 아무 말도 하지 못했다. 얼굴에서 핏기가 빠지는 게 보였고, 손에 쥔 봉투 끝이 천천히 구겨졌다. 량즈위는 그 표정을 끝까지 볼 수 없었다. 더 보고 있으면 방금 내뱉은 말을 주워 담고 싶어질 것 같았고, 그러면 오히려 더 비참해질 것 같았다. 그는 그대로 자리에서 일어났다. 병실을 나왔고, 문을 닫은 뒤에도 돌아보지 않았다. 복도에 나왔을 때까지도 손에 쥐고 있던 비닐이 구겨지는 소리만 남아 있었다.
+
+그날은 비가 오고 있었다. 병원 밖으로 나오자마자 습한 공기와 젖은 냄새가 한꺼번에 밀려들었지만, 그는 한동안 처마 아래에 멍하니 서 있기만 했다. 돌아가야 한다는 생각은 여러 번 들었다. 방금 한 말을 취소할 수는 없어도, 적어도 아니라고 정정은 해야 했다. 그런데 발이 떨어지지 않았다. 돌아가면 결국 또 같은 말이 나올 것 같았다. 아니면 더 처참한 변명만 늘어놓게 될 것 같았다. 그는 자기 안에서 아직 식지 않은 분노와 수치를 감당할 자신이 없었다. 그래서 시간을 좀 두면 괜찮아질 거라고, 잠깐만 벗어나 있으면 머리가 식을 거라고 스스로를 속이며 병원을 떠났다. 그 잠깐이 얼마나 치명적인지 모른 채로.
+
+다시 돌아왔을 때, 병실은 조용했다. 침대는 비어 있었고, 커튼은 반쯤 젖혀진 채였다. 젖은 바닥 자국이 입구 쪽에 흐릿하게 남아 있었고, 누군가 급하게 나갔다 들어온 것처럼 의자가 조금 어긋나 있었다. 그는 문 앞에 한참 서 있었다. 안으로 들어가서도 아무것도 건드리지 못했다. 그냥, 그대로 서 있었다. 동생은 그런 몸으로 밖에 나갔다. 원래도 오래 바깥바람을 맞으면 안 되는 몸이었는데, 그럼에도 그 애는 그를 찾으러 나갔다. 아마 사과를 들으러가 아니라, 형이 정말로 자기 때문에 저렇게 망가지고 있는 건 아닌지 확인하고 싶었을 것이다. 아니면 최소한, 혼자 비 맞고 서 있을 형을 그냥 둘 수 없었던 것일지도 몰랐다. 그 애는 끝까지 형 쪽으로 기울어 있는 사람이었으니까. 결국 돌아오지 못했다.
+
+비어 있는 침대와 반쯤 젖혀진 커튼, 손도 대지 못한 채 남겨진 물건들만이 제자리에 있었다. 그는 한참 동안 그 앞에 서 있었지만, 아무것도 만지지 못했다. 슬픔이 밀려왔다기보다, 그냥 안쪽이 텅 비어버린 것 같았다. 울어야 할 것 같은데 울음도 나오지 않았고, 무너져야 할 것 같은데 몸은 이상하게 똑바로 서 있었다. 그 순간부터 그의 삶에서 목적이라는 건 사라졌다. 동생을 살리기 위해 버틴 시간들이 끝났다면, 이제 더 버틸 이유도 없었다. 
+
+그러나 경기는 이미 잡혀 있었고, 빠질 수 없었다. 그는 예정된 시간에 그대로 나갔다. 돈은 여전히 쌓였지만 이제는 쓸 곳이 없었다. 애초에 자신을 위해 돈을 써본 적이 없는 사람이었으니, 갑자기 그 돈으로 뭘 해야 할지도 알 수 없었다. 숨을 쉬는 일조차 늘 동생을 살리기 위해 이어가던 것이었는데, 그 이유가 사라지고 나니 몸은 움직여도 안은 텅 비어 있었다. 그래서 그날 그는 평소처럼 싸우지 않았다. 일부러 맞아주고, 끝까지 버티다가 마지막에 뒤집는 식의 연출도 하지 않았다. 시작과 동시에 상대에게 달려들었고, 멈춰야 할 순간에도 손을 멈추지 않았다. 상대가 이미 무너진 뒤에도 한 번 더, 또 한 번 더 내려쳤고, 결국 사람 하나가 그 자리에서 죽었다. 경기장은 이상할 만큼 조용해졌다. 그는 아무 표정도 없이 돈을 받아 들고 나왔다. 그 광경을, 누군가 처음부터 끝까지 지켜보고 있었다.
+
+그날 밤 항구에는 비가 계속 내리고 있었다. 량즈위는 한참 동안 바다를 바라보고 서 있었다. 물은 새까맣고 조용했고, 그 안으로 발 하나만 내딛으면 모든 게 끝날 것 같았다. 이상하게도 무섭지 않았다. 차라리 너무 자연스러워서, 지금까지 버텨온 시간이 더 이상하게 느껴질 정도였다. 그래서 몸을 앞으로 기울이던 순간, 누군가 뒤에서 그의 목덜미를 거칠게 붙잡았다. 시야가 순식간에 뒤집혔고, 그는 그대로 바닥에 내리꽂혔다. 숨이 턱 막혔고, 팔은 등 뒤로 꺾였다. 겨우 정신을 추슬러 올려다봤을 때 보인 것은 우산 아래 서 있는 커다란 노인이었다. 옆에서는 누군가가 그에게 담뱃불을 붙여주고 있었고, 다른 몇몇은 량즈위를 완전히 눌러 제압한 채 놓아주지 않았다.
+
+노인은 담배를 한 모금 빨아들인 뒤, 마치 가치 없는 이야기를 하듯 담담하게 말했다. 자신의 능력을 알아보지 못하는 인간이 가장 멍청하다고, 그런데 그보다 더 멍청한 건 너처럼 제 목숨을 끊으려 드는 놈이라고. 량즈위는 그 말을 이해하려 하지 않았다. 이해하고 싶지도 않았다. 그는 그대로 몸을 틀어 달려들었고, 다시 두들겨 맞고, 또 바닥에 처박혔다. 몇 번이나 같은 일이 반복된 끝에 피투성이가 된 채 늘어졌을 때, 노인이 비로소 그를 내려다보며 물었다. 왜 죽으려 하냐고.
+
+량즈위는 한동안 숨만 헐떡였다. 목 안쪽이 다 찢어진 사람처럼 숨이 고르게 이어지지 않았다. 한참 만에 겨우 입을 열었을 때 나온 말은 단순했다. 동생이 없다고. 동생이 아파서 지키려고 했는데 결국 자신 때문에 죽었고, 이제는 살아야 할 이유가 없는데 왜 살아야 하냐고. 빗소리만 오래 남았다. 그리고 노인은 아주 짧게 말했다.
+
+“그럼 내가 살아갈 이유를 만들어주지. 내 개가 되어 날 위해 살아.”
+
+그날 이후, 량즈위는 이름이 바뀌었고, 살아가는 방식도 바뀌었다. 그러나 시간이 십 년 넘게 흐른 지금도 그날의 감각은 조금도 사라지지 않았다. 강한 빛 아래에 서면 시야가 흔들리고, 비가 오는 날이면 이유 없이 몸이 무거워지며, 항구 앞에만 서면 발이 좀처럼 떨어지지 않는다.
+
+어쩌면 지금의 그는 아직도 그날의 물가에 반쯤 걸친 채, 완전히 가라앉지도, 그렇다고 완전히 돌아오지도 못한 상태로, 누군가가 다시 한 번 자신을 붙잡아 끌어올려 주기를 기다리고 있는지도 모른다.`,
+        note: '동생 이야기를 직접 건드리는 순간 가장 위험해지므로 절대 무심하게 다루지 말 것',
+        traceImages: [
+          'R1.png',
+          'R2.png',
+          'R3.png',
+          'R4.png'
+        ]
+      },
+
+      "천카이": {
+        address: 'deleted://chen-kai-profile',
+        image: '7.png',
+        name: '천카이',
+        subtitle: 'Chen Kai',
+        tags: ['삭제기록', '본명', '13세', 'ESTP'],
+        introduction:
+`“버려진 자리에서 본능만으로 살아남는 법을 먼저 배운 인간.”
+
+사람은 보통 무엇이 옳고 그른지 배우면서 자란다. 하지만 천카이는 그렇지 않았다. 그는 도덕보다 먼저 허기와 공포를 배웠고, 잘못이라는 개념보다 살아남는 감각을 먼저 몸에 익힌 사람이다. 부모가 있어도 보호받지 못하는 환경, 매일같이 망가진 소리와 냄새가 가득한 빈민가에서 그는 아주 이른 시기부터 기다리는 대신 먼저 움직이는 쪽을 택했다. 천카이는 비뚤어진 인간이라기보다, 제대로 자랄 수 없는 곳에서 가장 빠르게 환경을 습득한 생존형 구조에 가깝다.`,
+        ageProfile: '13세 / ESTP',
+        heightWeight: '또래 대비 큰 체격 / 마른 편에서 점차 근육형으로 성장',
+        appearance:
+`핑크빛 머리
+굶주림과 방치 흔적이 남은 마른 체형
+잦은 타박상 / 거친 손 / 상처에 둔감`,
+        position:
+`상해 빈민가 아동 무리의 중심
+절도 / 도주 / 생존 주도자`,
+        feature:
+`민첩성 매우 높음
+도주 및 상황판단 속도 빠름
+통증과 배고픔에 대한 내성 높음
+아이 울음소리 및 빈민가 소음에 과민
+선제 반응 습관 강함`,
+        core:
+`도덕보다 생존이 먼저인 구조
+훔치고 도망치고 싸우는 방식에 익숙함
+위험 앞에서 머리보다 몸이 먼저 움직임
+보호받지 못한 유년기의 결핍 내재`,
+        personality:
+`기본 성향:
+
+충동적 / 영악함 / 눈치 빠름 / 생존본능 강함 / 공격적 / 무리 주도형 / 경계심 강함`,
+        narrative:
+`어떤 아이들은 이름보다 먼저 냄새를 배우고, 온기를 배우기도 전에 썩어가는 기척을 먼저 배운다. 천카이(陈凯)가 기억하는 가장 이른 시절도 그랬다. 바닥에는 술병이 굴러다녔고, 오래된 음식물과 눅눅한 먼지, 알 수 없는 약 냄새가 집 안 공기처럼 들러붙어 있었다. 부모는 늘 방 안 어딘가에 널브러져 있었는데, 자는 것 같지도 죽은 것 같지도 않은 얼굴로 허공을 보고 중얼거렸다. 팔에는 겹겹이 멍이 들어 있었고, 그 멍이 언제 생겼는지 묻는 사람은 아무도 없었다. 배가 고프면 그는 손에 잡히는 걸 입에 넣었다. 쉬어빠진 음식이 혀에 닿고, 곧바로 토가 올라왔지만, 그래도 다시 먹었다. 배고픔은 부끄러운 게 아니었고, 그걸 견디지 못하는 몸만이 문제였으니까.
+
+그가 자란 빈민가는 늘 시끄러웠다. 높은 데까지 다닥다닥 붙어 올라간 집들 사이로 울음소리와 깨지는 소리, 고함과 욕설이 하루도 쉬지 않고 흘러다녔다. 누구 집에서 무슨 일이 나는지 굳이 묻지 않아도 알 수 있었다. 벽은 얇았고, 삶은 더 얇았다. 부모가 아예 없거나, 있어도 술과 약에 잠겨 제 역할을 하지 못하는 집들이 수두룩했고, 아이들은 서로를 보며 자기 처지를 배웠다. 무슨 일이 터지면 다들 저절로 모였다. 해결할 수는 없어도, 혼자 떠는 것보다는 나았기 때문이다. 천카이는 그 무리 안에서 이상하리만치 빨리 중심이 되었다. 발이 빨랐고, 눈치가 빨랐고, 머리가 돌았다. 어디에 손을 넣어야 들키지 않는지, 언제 뛰어야 잡히지 않는지, 누구부터 움직이면 나머지가 따라오는지를 본능처럼 알았다.
+
+그래서 아이들은 훔쳤다. 먹을 것을 훔쳤고, 팔 수 있는 것을 훔쳤고, 그렇게 하루를 다음 날로 넘겼다. 그게 나쁘다고 말해주는 어른은 없었다. 애초에 그런 말을 해줄 만한 어른이 주변에 남아 있지 않았다. 초등학생 또래가 되었을 무렵부터는 손에 쥐는 물건의 값도 점점 올라갔지만, 천카이의 다리는 웬만한 어른보다 빨랐고, 두려움보다 배고픔이 먼저였기 때문에 그는 번번이 빠져나갔다. 세상은 늘 그를 버리고 있었고, 그는 그 세상에서 필요한 것을 먼저 훔쳐 오는 쪽이 더 공평하다고 여겼다. 누가 가르쳐준 생각은 아니었다. 그냥 그렇게 살아졌을 뿐이다.
+
+열세 살이 되던 해, 그는 평소와는 다른 무게를 손에 쥐었다. 무섭게 생긴 사내들이 들고 있던 가방이었고, 안에는 부모를 조금씩 망가뜨리고 집 안의 숨을 썩게 만들던 것과 같은 냄새가 들어 있었다. 정확히 그게 얼마나 값이 나가는지, 어떤 거래를 의미하는지는 몰랐다. 그런데도 직감할 수 있었다. 이건 지금까지 훔쳐온 것들과는 다른 물건이라는 걸. 너무 값이 나가서 위험하고, 너무 위험해서 오히려 손이 먼저 갔다는 걸.
+
+그날 그는 끝내 도망치지 못했다. 어디선가 날아든 주먹에 정신이 꺾였고, 눈을 떴을 때는 폐공장 바닥이었다. 깨어나기도 전부터 얻어맞았고, 깨어난 뒤에도 마찬가지였다. 발에 차이고, 밟히고, 손발이 묶인 채 질질 끌리면서도 그는 완전히 정신을 놓지는 않았다. 담배 연기 사이로 몇몇이 그를 어떻게 처리할지 이야기하는 소리가 들렸다. 거래를 봤으니 죽여야 한다는 목소리와, 아무리 그래도 너무 어린 애 아니냐는 목소리가 뒤섞였다. 그 와중에도 천카이는 손에 닿는 걸 찾고 있었다. 거친 바닥을 더듬다 유리조각을 찾아냈고, 손목을 조이던 줄을 아주 조금씩, 아주 조용히 긁어냈다. 숨소리 하나까지 죽인 채로.
+
+결국 그를 제일 많이 팼던 조직원 하나만 남고, 나머지가 보고를 하러 잠시 자리를 비웠을 때였다. 남자가 등을 돌린 순간, 천카이는 끊어진 줄을 털어내고 일어났다. 손에 잡힌 벽돌을 망설임 없이 내리쳤고, 둔탁한 소리가 공장 안에 울렸다. 하지만 한 번으로 끝나지 않았다. 남자는 곧바로 뒤돌아보며 그를 붙잡았고, 이번에는 더 노골적인 분노로 어린 몸을 짓뭉개기 시작했다. 그때 공장 문이 열렸다.
+
+사람들이 들어왔다. 비서와 조직원들, 그리고 그들 사이를 느리게 가로지르며 안으로 들어온 장웨이룽. 다들 피 흘리는 부하가 아이 하나를 발로 차며 윽박지르는 장면을 조용히 지켜봤다. 맞고 있던 천카이가 아니라, 그를 때리는 쪽이 더 초라해 보일 만큼 적막한 순간이었다. 남자가 급히 변명하려 입을 열었다.
+
+“그게 아니라… 이 새끼가 묶어놨는데 갑자기—”
+
+말이 끝나기도 전에 총성이 울렸다. 남자는 그대로 무너졌고, 방 안은 다시 조용해졌다. 마치 처음부터 그 소리 하나만 필요했다는 것처럼.
+
+장웨이룽은 천천히 다가와 천카이 앞에 멈춰 섰다. 그리고 손을 뻗어 그의 턱을 들어 올렸다. 제대로 먹지 못해 마르고, 얻어맞아 입술이 터진 볼품없는 얼굴이었다. 그런데도 눈빛만은 흐리지 않았다. 어린 짐승이 마지막까지 이빨을 감추지 않고 노려보는 것 같은 눈. 장웨이룽은 아마 그 눈을 마음에 들어 했을 것이다. 어쩌면 아주 오래전, 아직 지금처럼 거대해지기 전의 자기 자신을 잠깐 떠올렸는지도 모른다. 그는 천카이의 이름을 물었고, 아이가 겨우 내뱉은 대답을 듣고는 웃었다. 승리라는 이름을 달고 태어났으면서 정작 승리라고 부를 만한 삶 한 번 가져본 적 없는 얼굴이라고, 그런 식으로 들릴 만큼 길고 느긋한 웃음이었다.
+
+그리고 그는 이름을 바꿨다. 자기 성을 붙이고, 새로운 말을 얹었다. 장리옌(张戾琰). 아름다운 것 안에 봉인된 사나운 본능. 설명이라기보다 선언이었고, 허락이라기보다 판결에 가까웠다.
+
+“천카이는 죽었다. 이제부터 너는 장리옌으로 살아가라.”
+
+그 말이 떨어지는 순간, 이전의 이름은 너무 쉽게 잘려나갔다. 천카이는 그 자리에서 처음으로 설명할 수 없는 감정을 느꼈다. 무서웠고, 압도당했고, 그런데도 이상하게 눈을 떼지 못했다. 다정함과는 거리가 먼 방식이었지만, 누군가가 자신을 골라 이름을 주는 일은 처음이었기 때문이다. 버려진 아이에게는, 그것만으로도 충분히 거대한 사건이었다.
+
+그 뒤로 그는 조직 안에서 길러졌다. 아니, 더 정확히는 날이 세워졌다. 원래도 폭력에는 망설임이 없었고, 통증은 생각보다 일찍 무뎌졌다. 위험을 감지하는 속도는 빨랐고, 한 번 물면 놓지 않는 성질은 훈련보다 먼저 몸에 박혀 있었다. 그래서 사고도 많았다. 너무 세게 망가뜨렸고, 너무 늦게 멈췄고, 내부에서도 여러 번 문제를 일으켰다. 그런데도 버려지지 않았다. 그럴수록 오히려 장웨이룽의 곁에 더 가까이 붙었다. 장리옌은 어느 순간부터 그를 “아버지”라고 불렀고, 장웨이룽은 굳이 그 호칭을 막지 않았다. 그게 아이를 더 깊이 묶어두는 방식이라는 걸 모를 사람이 아니었다.
+
+그럼에도, 가장 깊은 곳에는 아직 천카이가 가라앉아 있다. 왜 자신을 그렇게 내버려뒀는지, 그럴 거면 왜 낳았는지 끝내 묻지 못한 채 남아 있는 아이. 한 번쯤은 찾아가 보고 싶다가도, 막상 그 끝에 무엇이 있을지 알아서 발이 떨어지지 않는다. 조직 안에서 약에 잠식된 인간들이 어떻게 무너지는지 수도 없이 봐왔으니, 제 부모라고 다를 리 없다는 것도 안다. 그래서 더 무섭다. 확인하는 순간, 정말로 끝나버릴 것 같아서.
+
+장리옌이 천카이를 죽였다고 믿는 동안에도 끝내 죽지 못한 건 그런 감정이었다. 가장 밑바닥에 가라앉은 채, 썩지도 사라지지도 않고 남아 있는 마지막 조각처럼.`,
+        note: '불쌍한 아이처럼 보여도 절대 방심하지 말 것. 먼저 물어뜯는 쪽이다.',
+        traceImages: [
+          'C1.png',
+          'C2.png',
+          'C3.png',
+          'C4.png'
+        ]
+      },
+
+      "구위청": {
+        address: 'deleted://gu-weiqing-profile',
+        image: '8.png',
+        name: '구위청',
+        subtitle: 'Gu Weiqing',
+        tags: ['삭제기록', '본명', '23세', 'ESFJ'],
+        introduction:
+`“지나치게 깨끗했기 때문에 가장 먼저 더럽혀질 수밖에 없었던 인간.”
+
+사람은 보통 옳은 것을 오래 믿으면 끝까지 지켜낼 수 있다고 생각한다. 하지만 구위청은 그렇지 않았다. 그는 너무 반듯했고, 너무 선했으며, 너무 쉽게 자신이 옳다고 믿는 방향으로 몸을 던질 수 있는 사람이었다. 화목한 가정과 선한 부모 밑에서 자라 경찰의 삶을 동경하고, 정의를 위해 움직이는 것을 의심 없이 받아들인 사람. 그런 종류의 인간은 조직을 무너뜨리기 위한 잠입 임무에 가장 적합해 보이지만, 동시에 한 번 무너지기 시작하면 가장 크게 부서진다. 구위청은 강한 인간이라기보다, 이상을 끝까지 붙들 수 있다고 믿었기 때문에 가장 깊게 잠식된 구조에 가깝다.`,
+        ageProfile: '23세 / ESFJ',
+        heightWeight: '184cm / 81kg',
+        appearance:
+`흑발에서 점차 새치가 올라오는 상태
+단정한 인상 / 정리된 체형
+잠입 기간이 길어질수록 피로와 쇠약 흔적 심화`,
+        position:
+`범죄조직 잠입수사 경찰
+극비 프로젝트 투입 인원`,
+        feature:
+`감정 통제력 높았으나 점차 약화
+상황 적응력 우수
+증명을 위한 과잉 자기희생
+지속적 스트레스와 약물 노출
+정체성 혼란 심화`,
+        core:
+`정의를 믿는 성향
+지시에 대한 높은 순응도
+사명감 기반 행동 구조
+잠입 환경 속에서 자기 경계 붕괴`,
+        personality:
+`기본 성향:
+
+성실 / 반듯함 / 책임감 강함 / 이상주의적 / 타인 지향적 / 자기희생적 / 순응적`,
+        narrative:
+`어떤 사람은 제 이름보다 먼저 기대를 뒤집어쓴 채 태어나고, 그 기대가 끝내 자기 것이 되지 못한 채 오래 남는다. 구위청(顾维清)이라는 이름도 그랬다. 맑음을 지키는 사람. 그 이름은 지나치게 반듯했고, 그래서 더 쉽게 부러질 수 있는 종류의 것이었다. 실제로도 그는 그런 삶을 살아왔다. 부모에게 반항 한 번 하지 않고 자라, 화목한 가정과 선한 부모 아래에서 흔들림 없이 길을 밟아온 사람, 경찰이라는 직업을 동경하며 옳은 일을 한다는 감각을 의심 없이 믿고 살아온 사람, 너무 깨끗해서 조금만 더러워져도 바로 드러나고, 너무 곧아서 한 번 꺾이면 어디서 부러졌는지가 오래 남는 사람. 그렇기 때문에 선택된 것도 어쩌면 자연스러운 일이었다.
+
+신룡회는 겉으로 드러난 것보다 훨씬 깊은 곳에 뿌리를 박고 있었다. 상해 최대 규모의 범죄 카르텔, 수천 명의 조직원과 해외 지부, 무기와 마약과 사람과 장기와 돈이 한 몸처럼 엉켜 돌아가는 구조, 정계와 손을 잡고 있고 경찰을 적대하며, 배신이나 잠입이 확인되는 순간 혈연까지 모조리 지워버리는 방식으로 자신을 유지하는 조직. 겉가지를 쳐내는 방식으로는 절대 무너지지 않는 고목이었고, 그래서 안에서부터 썩게 만들어야 한다는 결론이 내려졌다. 그 역할을 맡을 사람은 분명했다. 정의를 믿고, 사명감이 강하고, 지시를 따르며, 동시에 계획이 틀어졌을 때 버려도 흔적이 덜 남는 사람. 구위청은 그 조건에 너무 정확하게 들어맞았다.
+
+그는 그렇게 사라졌다. 기록에서 지워졌고, 이름을 감췄고, 아무도 모르게 다른 사람이 되어 신룡회 안으로 들어갔다. 쉬안롄(玄怜)이라는 이름은 낯설었지만, 오래 붙잡고 있을 시간은 없었다. 들어간 순간부터 그는 의심받는 쪽이었고, 그 의심을 지우는 방법은 단순했다. 더 깊이 들어가는 것. 피를 묻히고, 손을 더럽히고, 이 세계의 공기를 그대로 들이마시는 것. 처음에는 선을 남겨두려 했지만, 그건 오래 가지 않았다. 의심을 피하려면 더 깊이 들어가야 했고, 더 깊이 들어갈수록 돌아갈 수 있는 기준이 먼저 무너졌다. 사람을 죽이고, 마약을 하고, 범죄에 가담하는 일이 반복되면서 어느 순간부터는 무엇을 위해 버티고 있는지조차 흐려졌다. 남을 위해 먼저 움직이던 사람은 조용해졌으며, 총명하던 눈빛은 오래 잠을 못 잔 사람처럼 탁해졌다. 그는 더 이상 흔들리지 않기 위해 스스로를 줄였고, 그 과정에서 남은 건 죄책감이 아니라 공허에 가까웠다.
+
+지원 요청은 여러 번 보냈지만, 답은 오지 않았다. 처음에는 늦는 거라고 생각했고, 그다음에는 문제가 생긴 거라고 여겼으며, 결국에는 아예 기대 자체를 지우는 쪽으로 바뀌었다. 임무 관련 연락은 끊겼고, 조직 안에서 그는 완전히 고립됐다. 밖에서는 아무 일도 없다는 듯 조용했고, 안에서는 계속해서 자신을 증명해야 했다.
+
+어쩌면 이유는 단순했을지도 모른다. 신룡회를 무너뜨린다는 계획 자체가 처음부터 허황된 것이었고, 정치적 압박 속에서 그 계획은 조용히 접혔을 가능성. 누군가는 이미 포기했을 것이고, 누군가는 덮어두는 편을 택했을 것이다. 다만 그 사실을 그는 전달받지 못했다. 버려졌다는 문장을 직접 듣지 못한 채, 연락이 끊긴 자리의 정적만 견디는 쪽으로 남겨졌고, 그런 종류의 정적은 사람을 아주 천천히, 그러나 확실하게 망가뜨린다.
+
+원래 하얀 것은 조금만 더러워져도 눈에 띈다. 구위청에게 묻은 것들도 그랬다. 처음에는 분명하게 느껴졌고, 나중에는 어디까지가 묻은 것이고 어디부터가 본래인지조차 구분이 되지 않았다. 스트레스로 머리에 새치가 올라오기 시작했고, 까맣던 머리는 점점 색을 잃어갔다.
+
+'나는 빛을 지키는 그림자인가, 아니면 이 심연이 길러낸 괴물인가.'
+
+그 질문은 반복될수록 답을 찾기보다 형태를 잃었고, 어느 순간부터는 더 이상 떠오르지 않게 되었다. 그렇게 기준이 사라진 자리에서, 그는 무너지는 대신 기울어졌다.
+
+결정적인 날도 그렇게 찾아왔다. 또다시 범죄에 가담했고, 또다시 피를 봤고, 또다시 무언가를 증명해야 했다. 다만 그날의 구위청은 이미 안쪽이 다 닳아 있었다. 멈춰야 할 순간을 놓쳤고, 어디까지가 선인지 구분하지 못한 채 계속 움직였으며, 끝났을 때는 조직원과 상대를 가리지 않고 주변이 전부 무너져 있었다. 그를 죽여야 한다는 말이 바로 나왔다. 묶인 채로 두들겨 맞았고, 분노와 복수라는 이름 아래 사람이 사람을 패는 소리가 한밤중 짐승 울음처럼 길게 이어졌다.
+
+피가 눈 안으로 흘러 시야가 흐려지고, 달빛이 너무 밝아서 오히려 멀게 느껴지던 그 순간에 장웨이룽이 나타났다. 모두가 죽여야 한다고 말하는 자리에서, 장웨이룽만은 한참 동안 아무 말 없이 그를 내려다봤다. 피에 젖은 시야 너머로 얼굴은 보이지 않았고, 달빛을 등지고 서 있었기 때문에 표정도 읽히지 않았다. 그런데도 구위청은 이상한 확신에 사로잡혔다.
+
+저 사람은 지금 나를 보고 있다. 그리고 어쩌면, 웃고 있다.
+
+이유는 알 수 없었지만 그렇게 느껴졌고, 그 감각은 오래 잊고 있던 어떤 갈증을 찌르듯 되살렸다. 장웨이룽은 그를 비난하지 않았다. 잘못됐다고도, 실패했다고도, 더럽혀졌다고도 말하지 않았다. 대신 너같은 인간은 본래 어둠이 있기 때문에 존재할 수 있는 사람이라고, 그래서 누구보다 어둠 가까이에 설 수 있는 사람이라고 말했다. 넌 여기에 걸맞은 인간이고, 나는 네 능력을 높게 산다고. 그 말은 이상할 만큼 깊이 박혔다. 부정당하지 않는다는 감각, 있는 그대로의 지금을 처음으로 누군가가 인정해주는 순간. 그것이 얼마나 위험한지 알기 전에, 구위청은 이미 그 말 속으로 기울고 있었다.
+
+그날 이후, 구위청은 스스로를 놓았다. 타락이라기보다, 오래 버티다 비어버린 자리 위에 다른 이름을 얹은 것에 가까웠다. 깨끗했던 시절의 자신을 억지로 구해내려 하지 않았고, 구위청이라는 이름을 스스로 죽은 사람처럼 취급하기 시작했다. 살아남기 위해서였고, 더 무너지지 않기 위해서였으며, 무엇보다 이제는 그 편이 훨씬 덜 아팠기 때문이다. 그렇게 그는 쉬안 롄으로 남았다. 죄책감과 스트레스만으로도 머리가 하얗게 바래버릴 만큼 착했던 사람은, 결국 자신을 지키기 위해 자신을 포기하는 법부터 배웠다.
+
+그럼에도 머리카락 사이사이에 아직 검은 부분을 남겨두는 건, 전부 하얗게 덮어버리는 순간 정말로 아무것도 남지 않을 것 같아서일지도 모른다. 마음 가장 깊은 곳에서 아직도 과거의 자신을 그리워하는 마지막 흔적까지 사라질까 봐, 그래서 끝내는 돌아갈 수 없다는 사실마저 완전히 굳어버릴까 봐, 그는 그 검은 조각들을 지우지 못한 채 오늘도 다른 이름으로 살아간다.`,
+        note: '너무 선한 사람은 망가질 때 가장 조용히, 그리고 가장 깊게 망가진다.',
+        traceImages: [
+          'G1.png',
+          'G2.png',
+          'G3.png',
+          'G4.png'
+        ]
+      }
+    };
+
+    function closeAllWindows() {
+      windows.forEach((windowEl) => windowEl.classList.remove('is-open'));
+    }
+
+    function resetProfileScroll() {
+      if (profilePage) profilePage.scrollTop = 0;
+    }
+
+    function updateTraceUI() {
+      if (!currentTraceImages.length) return;
+      traceImage.src = currentTraceImages[currentTraceIndex];
+      traceCounter.textContent = `${currentTraceIndex + 1} / ${currentTraceImages.length}`;
+    }
+
+    function hideTrace() {
+      currentTraceImages = [];
+      currentTraceIndex = 0;
+      traceImage.src = '';
+      traceCounter.textContent = '';
+      traceSection.classList.remove('is-visible');
+    }
+
+    function showTrace(images) {
+      if (!images || !images.length) {
+        hideTrace();
+        return;
+      }
+
+      currentTraceImages = images;
+      currentTraceIndex = 0;
+      traceSection.classList.add('is-visible');
+      updateTraceUI();
+    }
+
+    function fillProfile(data, isDeleted = false) {
+      detailAvatar.src = data.image;
+      detailAvatar.alt = data.name;
+      detailName.textContent = data.name;
+      detailSubtitle.textContent = data.subtitle;
+      detailIntroduction.textContent = data.introduction || '';
+      detailAgeProfile.textContent = data.ageProfile || '';
+      detailHeightWeight.textContent = data.heightWeight || '';
+      detailAppearance.textContent = data.appearance || '';
+      detailPosition.textContent = data.position || '';
+      detailFeature.textContent = data.feature || '';
+      detailCore.textContent = data.core || '';
+      detailPersonality.textContent = data.personality || '';
+      detailNarrative.textContent = data.narrative || '';
+      detailNote.textContent = data.note || '';
+
+      detailTags.innerHTML = '';
+      (data.tags || []).forEach((tag) => {
+        const span = document.createElement('span');
+        span.className = 'profile-tag';
+        span.textContent = tag;
+        detailTags.appendChild(span);
+      });
+
+      if (isDeleted) {
+        showTrace(data.traceImages || []);
+      } else {
+        hideTrace();
+      }
+    }
+
+    function showProfileList() {
+      profileListView.classList.add('active');
+      profileDetailView.classList.remove('active');
+      profileAddress.textContent = 'characters://index';
+      profileBackBtn.disabled = true;
+      profileBackBtn.style.opacity = '0.45';
+      profileBackBtn.style.cursor = 'default';
+      hideTrace();
+      resetProfileScroll();
+    }
+
+    function showProfileDetail(key) {
+      const data = profileData[key];
+      if (!data) return;
+
+      profileListView.classList.remove('active');
+      profileDetailView.classList.add('active');
+
+      profileAddress.textContent = data.address;
+      profileBackBtn.disabled = false;
+      profileBackBtn.style.opacity = '1';
+      profileBackBtn.style.cursor = 'pointer';
+
+      fillProfile(data, false);
+      resetProfileScroll();
+    }
+
+    function showRealProfileDetail(key) {
+      const data = realProfileData[key];
+      if (!data) return;
+
+      const profileWindow = document.querySelector('.window[data-window="profile"]');
+      if (!profileWindow) return;
+
+      closeAllWindows();
+      profileWindow.classList.add('is-open');
+
+      profileListView.classList.remove('active');
+      profileDetailView.classList.add('active');
+
+      profileAddress.textContent = data.address;
+      profileBackBtn.disabled = false;
+      profileBackBtn.style.opacity = '1';
+      profileBackBtn.style.cursor = 'pointer';
+
+      fillProfile(data, true);
+      resetProfileScroll();
+    }
+
+    function resetEndingScroll() {
+      if (endingPage) endingPage.scrollTop = 0;
+    }
+
+    function showEndingList() {
+      endingListView.classList.add('active');
+      endingDetailView.classList.remove('active');
+      endingAddress.textContent = 'archive://ending/index';
+      endingBackToListBtn.disabled = true;
+      endingBackToListBtn.style.opacity = '0.45';
+      endingBackToListBtn.style.cursor = 'default';
+      resetEndingScroll();
+    }
+
+    function showEndingDetail(key) {
+      const data = endingData.find((item) => item.key === key);
+      if (!data) return;
+
+      endingListView.classList.remove('active');
+      endingDetailView.classList.add('active');
+      endingAddress.textContent = `archive://ending/${key}`;
+      endingBackToListBtn.disabled = false;
+      endingBackToListBtn.style.opacity = '1';
+      endingBackToListBtn.style.cursor = 'pointer';
+
+      endingDetailTitle.textContent = data.title;
+      endingDetailSubtitle.textContent = data.subtitle;
+      endingDetailSectionTitle.textContent = data.title;
+      endingDetailBody.textContent = data.body;
+      resetEndingScroll();
+    }
+
+    function openConfirmOverlay(key) {
+      pendingRealProfileKey = key;
+      confirmOverlay.classList.add('is-open');
+    }
+
+    function closeConfirmOverlay() {
+      pendingRealProfileKey = null;
+      confirmOverlay.classList.remove('is-open');
+    }
+
+    function handleTrashPasswordSubmit() {
+      const value = trashPasswordInput.value.trim();
+
+      if (!value) {
+        trashMessage.textContent = '암호를 입력하세요.';
+        return;
+      }
+
+      if (realProfileData[value]) {
+        trashMessage.textContent = '';
+        openConfirmOverlay(value);
+        return;
+      }
+
+      trashMessage.textContent = '일치하는 삭제 기록이 없습니다.';
+    }
+
+    function formatTime(seconds) {
+      if (!Number.isFinite(seconds) || seconds < 0) return '00:00';
+      const mins = Math.floor(seconds / 60);
+      const secs = Math.floor(seconds % 60);
+      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+    }
+
+    function renderTrackList() {
+      musicList.innerHTML = '';
+
+      tracks.forEach((track, index) => {
+        const item = document.createElement('button');
+        item.type = 'button';
+        item.className = 'music-item';
+        if (index === currentTrackIndex) item.classList.add('active');
+
+        const main = document.createElement('div');
+        main.className = 'music-item-main';
+
+        const title = document.createElement('div');
+        title.className = 'music-item-title';
+        title.textContent = track.title;
+
+        const path = document.createElement('div');
+        path.className = 'music-item-path';
+        path.textContent = track.originalPath;
+
+        const duration = document.createElement('div');
+        duration.className = 'music-item-duration';
+        duration.textContent = track.durationLabel;
+
+        const state = document.createElement('div');
+        state.className = 'music-item-state';
+        state.textContent = index === currentTrackIndex && !audioPlayer.paused ? 'PLAYING' : 'READY';
+
+        main.appendChild(title);
+        main.appendChild(path);
+        item.appendChild(main);
+        item.appendChild(duration);
+        item.appendChild(state);
+
+        item.addEventListener('click', async () => {
+          await loadTrack(index, true);
+        });
+
+        musicList.appendChild(item);
+      });
+    }
+
+    function updateMusicUI() {
+      const track = tracks[currentTrackIndex];
+      musicNowTitle.textContent = track.title;
+      musicNowPath.textContent = track.originalPath;
+      musicTotalTime.textContent = Number.isFinite(audioPlayer.duration)
+        ? formatTime(audioPlayer.duration)
+        : track.durationLabel;
+      musicCurrentTime.textContent = formatTime(audioPlayer.currentTime || 0);
+
+      const max = Number.isFinite(audioPlayer.duration) && audioPlayer.duration > 0
+        ? audioPlayer.duration
+        : 0;
+      musicProgress.max = String(max);
+      if (!isSeeking) {
+        musicProgress.value = String(audioPlayer.currentTime || 0);
+      }
+
+      playPauseBtn.textContent = audioPlayer.paused ? '재생' : '일시정지';
+      renderTrackList();
+    }
+
+    async function loadTrack(index, autoPlay = false) {
+      if (index < 0) index = tracks.length - 1;
+      if (index >= tracks.length) index = 0;
+
+      currentTrackIndex = index;
+      const track = tracks[currentTrackIndex];
+      audioPlayer.src = track.src;
+      audioPlayer.load();
+      audioPlayer.currentTime = 0;
+
+      updateMusicUI();
+
+      if (autoPlay) {
+        try {
+          await audioPlayer.play();
+        } catch (error) {
+          console.warn('자동 재생이 차단되었습니다.', error);
+        }
+      }
+
+      updateMusicUI();
+    }
+
+    async function togglePlayPause() {
+      if (!audioPlayer.src) {
+        await loadTrack(currentTrackIndex, true);
+        return;
+      }
+
+      if (audioPlayer.paused) {
+        try {
+          await audioPlayer.play();
+        } catch (error) {
+          console.warn('재생 실패', error);
+        }
+      } else {
+        audioPlayer.pause();
+      }
+
+      updateMusicUI();
+    }
+
+    function stopPlayback() {
+      audioPlayer.pause();
+      audioPlayer.currentTime = 0;
+      updateMusicUI();
+    }
+
+    async function playPrevTrack() {
+      await loadTrack(currentTrackIndex - 1, true);
+    }
+
+    async function playNextTrack() {
+      await loadTrack(currentTrackIndex + 1, true);
+    }
+
+    function updateClock() {
+      const now = new Date();
+      const hours = String(now.getHours()).padStart(2, '0');
+      const minutes = String(now.getMinutes()).padStart(2, '0');
+      taskbarClock.textContent = `${hours}:${minutes}`;
+    }
+
+    openButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.open;
+        const targetWindow = document.querySelector(`.window[data-window="${target}"]`);
+        if (!targetWindow) return;
+
+        if (targetWindow.classList.contains('is-open')) {
+          targetWindow.classList.remove('is-open');
+          return;
+        }
+
+        closeAllWindows();
+        targetWindow.classList.add('is-open');
+
+        if (target === 'profile') {
+          showProfileList();
+        }
+
+        if (target === 'trash') {
+          trashPasswordInput.value = '';
+          trashMessage.textContent = '';
+        }
+      });
+    });
+
+    closeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.close;
+        const targetWindow = document.querySelector(`.window[data-window="${target}"]`);
+        if (targetWindow) targetWindow.classList.remove('is-open');
+      });
+    });
+
+    document.addEventListener('click', (event) => {
+      const card = event.target.closest('[data-profile]');
+      if (card) {
+        showProfileDetail(card.dataset.profile);
+        return;
+      }
+
+      if (event.target === profileBackBtn || event.target === backToListBtn) {
+        showProfileList();
+      }
+    });
+
+    trashPasswordSubmit.addEventListener('click', handleTrashPasswordSubmit);
+
+    trashPasswordInput.addEventListener('keydown', (event) => {
+      if (event.key === 'Enter') {
+        handleTrashPasswordSubmit();
+      }
+    });
+
+    confirmCancelBtn.addEventListener('click', closeConfirmOverlay);
+
+    confirmOkBtn.addEventListener('click', () => {
+      if (!pendingRealProfileKey) return;
+      const key = pendingRealProfileKey;
+      closeConfirmOverlay();
+      showRealProfileDetail(key);
+    });
+
+    tracePrevBtn.addEventListener('click', () => {
+      if (!currentTraceImages.length) return;
+      currentTraceIndex = (currentTraceIndex - 1 + currentTraceImages.length) % currentTraceImages.length;
+      updateTraceUI();
+    });
+
+    traceNextBtn.addEventListener('click', () => {
+      if (!currentTraceImages.length) return;
+      currentTraceIndex = (currentTraceIndex + 1) % currentTraceImages.length;
+      updateTraceUI();
+    });
+
+    prevTrackBtn.addEventListener('click', playPrevTrack);
+    nextTrackBtn.addEventListener('click', playNextTrack);
+    playPauseBtn.addEventListener('click', togglePlayPause);
+    stopTrackBtn.addEventListener('click', stopPlayback);
+
+    musicProgress.addEventListener('input', () => {
+      isSeeking = true;
+      musicCurrentTime.textContent = formatTime(Number(musicProgress.value));
+    });
+
+    musicProgress.addEventListener('change', () => {
+      audioPlayer.currentTime = Number(musicProgress.value);
+      isSeeking = false;
+      updateMusicUI();
+    });
+
+    volumeControl.addEventListener('input', () => {
+      const value = Number(volumeControl.value);
+      audioPlayer.volume = value / 100;
+      volumeValue.textContent = `${value}%`;
+    });
+
+    audioPlayer.addEventListener('loadedmetadata', updateMusicUI);
+    audioPlayer.addEventListener('timeupdate', updateMusicUI);
+    audioPlayer.addEventListener('play', updateMusicUI);
+    audioPlayer.addEventListener('pause', updateMusicUI);
+    audioPlayer.addEventListener('ended', playNextTrack);
+
+    window.addEventListener('resize', () => {
+      resetProfileScroll();
+    });
+
+    audioPlayer.volume = Number(volumeControl.value) / 100;
+    updateClock();
+    setInterval(updateClock, 1000);
+    showProfileList();
+    loadTrack(0, false);
+  
+    function showEndingList() {
+      if (!endingListView || !endingDetailView) return;
+      endingListView.classList.add('active');
+      endingDetailView.classList.remove('active');
+      endingAddress.textContent = 'archive://ending/index';
+      if (endingPage) endingPage.scrollTop = 0;
+    }
+
+    function showEndingDetail(key) {
+      const data = endingData.find((item) => item.key === key);
+      if (!data) return;
+
+      endingListView.classList.remove('active');
+      endingDetailView.classList.add('active');
+      endingAddress.textContent = `archive://ending/${key}`;
+      endingDetailTitle.textContent = data.title || '';
+      endingDetailSubtitle.textContent = data.subtitle || '';
+      endingDetailSectionTitle.textContent = 'RECORD';
+      endingDetailBody.textContent = data.body || '';
+      if (endingDetailImage) {
+        endingDetailImage.src = data.image || '';
+        endingDetailImage.alt = data.title ? `${data.title} 이미지` : 'ENDING IMAGE';
+      }
+      if (endingPage) endingPage.scrollTop = 0;
+    }
+
+    openButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.open;
+        closeAllWindows();
+        const targetWindow = document.querySelector(`.window[data-window="${target}"]`);
+        if (targetWindow) {
+          targetWindow.classList.add('is-open');
+          if (target === 'profile') showProfileList();
+          if (target === 'ending') showEndingList();
+        }
+      });
+    });
+
+    closeButtons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const target = button.dataset.close;
+        const targetWindow = document.querySelector(`.window[data-window="${target}"]`);
+        if (targetWindow) targetWindow.classList.remove('is-open');
+      });
+    });
+
+    document.querySelectorAll('.ending-card').forEach((card) => {
+      card.addEventListener('click', () => {
+        showEndingDetail(card.dataset.ending);
+      });
+    });
+
+    if (endingBackToListBtn) {
+      endingBackToListBtn.addEventListener('click', showEndingList);
+    }
+
+    document.querySelectorAll('.profile-card[data-profile]').forEach((card) => {
+      card.addEventListener('click', () => {
+        showProfileDetail(card.dataset.profile);
+      });
+    });
+
+    if (profileBackBtn) {
+      profileBackBtn.addEventListener('click', showProfileList);
+    }
+    if (backToListBtn) {
+      backToListBtn.addEventListener('click', showProfileList);
+    }
+
+    showProfileList();
+    showEndingList();
+
+  </script>
+</body>
+</html>
